@@ -1,14 +1,13 @@
 *,
 *::before,
 *::after {
-  box-sizing: border-box;
+	box-sizing: border-box;
 }
 
 body {
 	margin: 0;
-    padding: 0.5rem;
+	padding: 0.5rem;
 }
-
 
 button {
 	font-size: 1rem;

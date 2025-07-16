@@ -1,5 +1,5 @@
 {
-  "printWidth": 250,
-  "useTabs": true,
-  "quoteProps": "preserve"
+	"printWidth": 250,
+	"useTabs": true,
+	"quoteProps": "preserve"
 }
