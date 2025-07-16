@@ -234,7 +234,7 @@ function updateTabInfo(thisTab) {
 
 						//If this new tab is the active one, update the icon:
 						if (thisTab.active) {
-							chrome.browserAction.setIcon({ path: activeIcons });
+							chrome.action.setIcon({ path: activeIcons });
 						}
 					}
 				}
@@ -243,7 +243,7 @@ function updateTabInfo(thisTab) {
 			//If this webpage doesn't have an associated ABUkmark
 			//If this new tab is the current one, update the icon:
 			if (thisTab.active) {
-				chrome.browserAction.setIcon({ path: inactiveIcons });
+				chrome.action.setIcon({ path: inactiveIcons });
 			}
 		}
 	});
@@ -355,7 +355,7 @@ function createPage() {
 						mainButton.style.backgroundColor = "#f00";
 						mainButton.onclick = function () {
 							unABU(domain, storage[domain]["ABUid"]);
-							chrome.browserAction.setIcon({ path: inactiveIcons });
+							chrome.action.setIcon({ path: inactiveIcons });
 						};
 					} else {
 						chrome.storage.sync.remove(domain);
@@ -484,7 +484,7 @@ function ABU(input, mustMakeNew) {
 		}
 	});
 
-	chrome.browserAction.setIcon({ path: activeIcons });
+	chrome.action.setIcon({ path: activeIcons });
 }
 
 //Create a new bookmark to be an ABUkmark
