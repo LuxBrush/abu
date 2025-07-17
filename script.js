@@ -4,13 +4,13 @@ const inactiveIcons = { "128": "icons/128gray.png" };
 const ABUVersion = 1.4;
 
 //Call the variables here
-var url = "";
-var domain = "";
-var title = "";
-var favIconUrl = "";
+let url = "";
+let domain = "";
+let title = "";
+let favIconUrl = "";
 
 //Warn about home page ABUkmarks going everywhere if they're on the home page
-warning = "";
+let warning = "";
 
 console.log("May get an error: Unchecked runtime.lastError: The tab was closed. The code should keep running, but there's no way to check for if a tab exists; only to hide the error. I opted for just letting it be. :P");
 
@@ -35,15 +35,15 @@ function getWebpage(input, title, storage) {
 		/blog/
 		/comic/
 	*/
-	var keywordCheck = /.+\/(blog|comic)\//.exec(output);
+	let keywordCheck = /.+\/(blog|comic)\//.exec(output);
 	if (keywordCheck) output = keywordCheck[0];
 
 	//Check for indicative keywords; go up to those
-	var indicativeCheck = /.+\/(?=season-|ep-|episode-|page-|p-)/.exec(output);
+	let indicativeCheck = /.+\/(?=season-|ep-|episode-|page-|p-)/.exec(output);
 	if (indicativeCheck) output = indicativeCheck[0];
 
 	/////////ODD-URL WEBSITES COMPATABILITY/////////
-	var keywordCheck = null;
+	keywordCheck = null;
 
 	//WEBTOONS// webtoons.com/language/genre/name/
 	if (!keywordCheck) keywordCheck = /webtoons.com\/[^/]+\/[^/]+\/[^/]+\//.exec(input);
@@ -57,7 +57,7 @@ function getWebpage(input, title, storage) {
 	if (keywordCheck) output = keywordCheck[0];
 
 	/////////SPECIAL WEBSITE COMPATABILITY/////////
-	var special = null;
+	let special = null;
 
 	//TAPAS// tapas.io/episode/ (same for every comic; we have to test by title)
 	//console.log(input);
@@ -104,7 +104,7 @@ function getWebpage(input, title, storage) {
 function checkLevels(object, input) {
 	//console.log("Looking for higher level...",object,input);
 
-	var test = input,
+	let test = input,
 		output = input;
 
 	//If we're on a special-case website where the title is passed instead of the URL, return with it
@@ -141,7 +141,7 @@ chrome.tabs.onUpdated.addListener(function (tabId, changeInfo, updatedTab) {
 		//console.log(updatedTab.url);
 
 		//Save the URL without an ABUid
-		var newURL = updatedTab.url.replace(/(\?|\&)ABUid.*/, "");
+		let newURL = updatedTab.url.replace(/(\?|\&)ABUid.*/, "");
 
 		//If the URL had an ABUid, remove it
 		if (newURL !== updatedTab.url) {
@@ -184,14 +184,14 @@ function updateTabInfo(thisTab) {
 			allFrames: true,
 			code: `
 			if(!ABUYT){
-				var ABUYT = setInterval(function(){
+				let ABUYT = setInterval(function(){
 					// console.log('RUNNING INTERVAL');
-					var progressBar = document.getElementsByClassName("ytp-progress-bar");
+					let progressBar = document.getElementsByClassName("ytp-progress-bar");
 					
 					if(!progressBar.length) return;
 					
 					// If a miniplayer is opened, we need to make sure we get the last element- that will be the main player.
-					var newURL = window.location.href.replace(/&t=[^&]+|$/,"&t="+progressBar[progressBar.length-1].getAttribute("aria-valuenow"));
+					let newURL = window.location.href.replace(/&t=[^&]+|$/,"&t="+progressBar[progressBar.length-1].getAttribute("aria-valuenow"));
 					
 					// Don't update the history if it's the same- this wastes resources
 					if(newURL === window.location.href) return;
@@ -209,7 +209,7 @@ function updateTabInfo(thisTab) {
 		domain = checkLevels(storage, getWebpage(thisTab.url, thisTab.title, storage));
 
 		// In case this gets changed elsewhere, keep it the same here
-		var localDomain = domain;
+		let localDomain = domain;
 
 		//If this domain has an ABUkmark associated with it
 		if (storage[localDomain]) {
@@ -369,7 +369,7 @@ function createPage() {
 			});
 		}
 
-		var bookmarks = Object.keys(storage);
+		let bookmarks = Object.keys(storage);
 
 		//Create buttons for removing ABUkmarks
 		for (let i = 0; i < bookmarks.length; i++) {
@@ -411,8 +411,8 @@ function createPage() {
 
 		document.getElementById("abu-anywhere").innerHTML = anywhereButtons;
 
-		var buttons = document.getElementById("abu-anywhere").children;
-		var images = document.getElementsByTagName("img");
+		let buttons = document.getElementById("abu-anywhere").children;
+		let images = document.getElementsByTagName("img");
 
 		//Add functions for each button
 		for (let ii = 0; ii < buttons.length; ii++) {
@@ -474,7 +474,7 @@ function ABU(input, mustMakeNew) {
 				chrome.storage.sync.remove(inArrayDomain);
 			}
 
-			var ABUid = Date.now();
+			let ABUid = Date.now();
 
 			storeObj(input, ABUid);
 
@@ -515,8 +515,8 @@ function setNotification(input) {
 
 //Stores an object in the user's synced data
 function storeObj(input, bookmarkId) {
-	var obj = {};
-	var foo = input;
+	let obj = {};
+	let foo = input;
 	obj[foo] = { "ABUid": bookmarkId, "favIconUrl": favIconUrl };
 	chrome.storage.sync.set(obj);
 	createPage();
