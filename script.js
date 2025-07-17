@@ -1,3 +1,5 @@
+const comms = chrome.runtime.connect(undefined, { name: "comms" });
+
 //Icons
 const activeIcons = { "128": "icons/128blue.png" };
 const inactiveIcons = { "128": "icons/128gray.png" };
@@ -21,7 +23,7 @@ function getWebpage(input, title, storage) {
 	//console.log(input);
 
 	//Get everything up until 1) a numbered section (past the domain) or 2) a querystring
-	output = /(\S+\/\/+[^\/]+[^\d\?]+\/)+(?!$)/.exec(input);
+	let output = /(\S+\/\/+[^\/]+[^\d\?]+\/)+(?!$)/.exec(input);
 	//console.log(output);
 
 	//Remove http (and www too, if it's present)
@@ -542,6 +544,10 @@ function unABU(setUrl, setId) {
 if (document.getElementById("current-page")) {
 	console.log("ABU popup loaded!");
 
+	comms.postMessage("Placeholder post message");
+	comms.onMessage.addListener((message) => {
+		console.log("Placeholder received message:", message);
+	});
 	//Have notifications depending on what's done
 
 	mainButton = document.getElementById("current-page");

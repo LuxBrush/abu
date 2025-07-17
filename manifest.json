@@ -7,8 +7,8 @@
 	"author": "Josh Powlison",
 
 	"background": {
-		"service_worker": "script.js",
-		"scripts": ["script.js"]
+		"service_worker": "background.js",
+		"scripts": ["background.js"]
 	},
 
 	"icons": {
