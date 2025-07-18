@@ -478,7 +478,21 @@ function ABU(input, mustMakeNew) {
 
 			let ABUid = Date.now();
 
-			storeObj(input, ABUid);
+			/** @type {BookmarkCommData} */
+			const message = {
+				function: "saveBookmarkData",
+				data: {
+					bookmarkKey: input,
+					bookmarkId: ABUid,
+					favIconUrl,
+				},
+			};
+			comms.postMessage(message);
+			comms.onMessage.addListener((/** @type {boolean} */ returnMessage) => {
+				if (returnMessage) {
+					createPage();
+				}
+			});
 
 			chrome.bookmarks.update(thisBookmark[inArray].id, { title: title + " (ABU)", url: createABURL(url, ABUid) });
 
@@ -491,9 +505,23 @@ function ABU(input, mustMakeNew) {
 
 //Create a new bookmark to be an ABUkmark
 function createABUkmark(input, parentId) {
-	ABUid = Date.now();
+	const ABUid = Date.now();
 	chrome.bookmarks.create({ parentId: parentId, title: title + " (ABU)", url: createABURL(url, ABUid) }, function (newBookmark) {
-		storeObj(input, ABUid);
+		/** @type {BookmarkCommData} */
+		const message = {
+			function: "saveBookmarkData",
+			data: {
+				bookmarkKey: input,
+				bookmarkId: ABUid,
+				favIconUrl,
+			},
+		};
+		comms.postMessage(message);
+		comms.onMessage.addListener((/** @type {boolean} */ returnMessage) => {
+			if (returnMessage) {
+				createPage();
+			}
+		});
 	});
 }
 
@@ -513,15 +541,6 @@ function setNotification(input) {
 	}
 
 	document.getElementById("notification").style.display = input !== "" ? "block" : "none";
-}
-
-//Stores an object in the user's synced data
-function storeObj(input, bookmarkId) {
-	let obj = {};
-	let foo = input;
-	obj[foo] = { "ABUid": bookmarkId, "favIconUrl": favIconUrl };
-	chrome.storage.sync.set(obj);
-	createPage();
 }
 
 //Make an ABUkmark back into a regular bookmark
@@ -544,12 +563,7 @@ function unABU(setUrl, setId) {
 if (document.getElementById("current-page")) {
 	console.log("ABU popup loaded!");
 
-	comms.postMessage("Placeholder post message");
-	comms.onMessage.addListener((message) => {
-		console.log("Placeholder received message:", message);
-	});
 	//Have notifications depending on what's done
-
 	mainButton = document.getElementById("current-page");
 	mainButton.dataset.multiple = 0;
 
