@@ -12,8 +12,14 @@ type ABUBookmarkData = {
 /**
  * Storage structure for ABUkmarks
  * Maps webpage identifiers to their associated bookmark data
+ * Also contains extension metadata such as version information
  */
-type ABUStorage = { [key: string]: ABUBookmarkData };
+interface ABUStorage {
+	/** Current version of the ABU extension */
+	ABUVersion?: number;
+	/** Dynamic keys mapping webpage identifiers to their bookmark data */
+	[key: string]: ABUBookmarkData | undefined;
+}
 
 /**
  * Base interface for communication data between content scripts and background script

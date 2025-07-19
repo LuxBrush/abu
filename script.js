@@ -1,9 +1,14 @@
 const comms = chrome.runtime.connect(undefined, { name: "comms" });
 
+// Create the Get utilities instance
+const Get = createGetUtilities();
+
 //Icons
 const activeIcons = { "128": "icons/128blue.png" };
 const inactiveIcons = { "128": "icons/128gray.png" };
 const ABUVersion = 1.4;
+
+const mainButton = Get.elementByID("current-page");
 
 //Call the variables here
 let url = "";
@@ -205,10 +210,24 @@ function updateTabInfo(thisTab) {
 		});
 	}
 
-	chrome.storage.sync.get(function (storage) {
+	chrome.storage.sync.get(function (/** @type {ABUStorage} */ storage) {
 		//NOT DONE YET: If the page is part of a higher domain that we ARE keeping track of but we don't have a direct domain for this one, let's go up some levels:
 
-		domain = checkLevels(storage, getWebpage(thisTab.url, thisTab.title, storage));
+		/** @type {WebPageIdCommData} */
+		const message = {
+			functionName: "getWebPageId",
+			properties: {
+				url: thisTab.url,
+				title: thisTab.title,
+				storage,
+			},
+		};
+		comms.postMessage(message);
+		comms.onMessage.addListener((/** @type {string} */ returnMessage) => {
+			if (returnMessage && returnMessage !== "") {
+				domain = checkLevels(storage, returnMessage);
+			}
+		});
 
 		// In case this gets changed elsewhere, keep it the same here
 		let localDomain = domain;
@@ -252,17 +271,16 @@ function updateTabInfo(thisTab) {
 }
 
 function createPage() {
-	chrome.storage.sync.get(function (storage) {
+	chrome.storage.sync.get(function (/** @type {ABUStorage} */ storage) {
 		//ABUVersion info
 		if (!storage["ABUVersion"] || storage["ABUVersion"] < ABUVersion) {
-			document.getElementsByTagName("BODY")[0].insertAdjacentHTML("afterbegin", "<p id='update'>ABU 1.4 adds support for mangahub.io. Always feel free to let me know if ABU doesn't work on any website!</p>");
+			Get.elementByID("ABUSETUP").insertAdjacentHTML("afterbegin", "<p id='update'>ABU 1.4 adds support for mangahub.io. Always feel free to let me know if ABU doesn't work on any website!</p>");
 			chrome.storage.sync.set({ "ABUVersion": ABUVersion });
 		}
 
-		mainButton.dataset.multiple = 0;
-		//console.log(domain,domain.substr(0,domain.length-2).indexOf("/")==-1);
+		mainButton.dataset.multiple = "0";
 
-		console.log("url is", url);
+		// console.log("url is", url);
 
 		//If we're on the homepage, warn the user that subpages are better
 		if (
@@ -275,7 +293,7 @@ function createPage() {
 				warning += "ABUkmark a subpage if possible so visiting about, archives, links, etc doesn't update bookmarks. Just click on an article, a back button, or a button to start reading and it should be perfect!<br>";
 		}
 
-		anywhereButtons = "";
+		let anywhereButtons = "";
 
 		domain = checkLevels(storage, domain);
 
@@ -292,35 +310,55 @@ function createPage() {
 
 					setNotification(warning + "Will convert <em title='" + thisBookmark1[0].url + "'>" + thisBookmark1[0].title + "</em>. <span id='onlyNewABU'>Or, make a new ABUkmark.</span>");
 					if (thisBookmark1.length > 1) {
-						bookmarksChoose = "";
+						let bookmarksChoose = "";
 
-						warningClass = "";
+						let warningClass = "";
 
 						//Create a dropdown so you can choose which to change
 						for (let i = 0; i < thisBookmark1.length; i++) {
 							warningClass = "";
+							let url = "";
+							const bookmark = thisBookmark1[i];
+							if (!bookmark.url) {
+								throw new Error("Bookmark does not contain an URL.");
+							}
 
-							overwriteWarning(thisBookmark1[i]);
+							overwriteWarning(bookmark);
 
-							dropdownDomain = checkLevels(storage, getWebpage(thisBookmark1[i].url, thisBookmark1[i].title, storage)); //checkLevels(thisBookmark1[i].url);
+							/** @type {WebPageIdCommData} */
+							const message = {
+								functionName: "getWebPageId",
+								properties: {
+									url: bookmark.url,
+									title: bookmark.title,
+									storage,
+								},
+							};
+							comms.postMessage(message);
+							comms.onMessage.addListener((/** @type {string} */ returnMessage) => {
+								if (returnMessage && returnMessage !== "") {
+									url = returnMessage;
+								}
+							});
+							const dropdownDomain = checkLevels(storage, url);
 
 							//console.log(dropdownDomain);
 
 							//Add a dropdown with the bookmarks info
-							if (thisBookmark1[i].title.indexOf(" (ABU)") == -1) {
+							if (bookmark.title.indexOf(" (ABU)") == -1) {
 								//If the bookmark is untitled, let the user know
-								thisBookmarkTitle = thisBookmark1[i].title;
+								let thisBookmarkTitle = bookmark.title;
 								if (thisBookmarkTitle == "") {
 									thisBookmarkTitle = "(Untitled)";
 								}
 
-								bookmarksChoose += "<option class='" + warningClass + "' title='" + thisBookmark1[i].url + "' data-domain='" + dropdownDomain + "' value='" + thisBookmark1[i].id + "'>" + thisBookmarkTitle + "</option>";
+								bookmarksChoose += "<option class='" + warningClass + "' title='" + bookmark.url + "' data-domain='" + dropdownDomain + "' value='" + bookmark.id + "'>" + thisBookmarkTitle + "</option>";
 							} else {
-								bookmarksChoose += "<option class='overwrite' title='" + thisBookmark1[i].url + "' data-domain='" + dropdownDomain + "' value='" + thisBookmark1[i].id + "'>" + thisBookmark1[i].title + "</option>";
+								bookmarksChoose += "<option class='overwrite' title='" + bookmark.url + "' data-domain='" + dropdownDomain + "' value='" + bookmark.id + "'>" + bookmark.title + "</option>";
 							}
 						}
 						setNotification(warning + thisBookmark1.length + " bookmarks spotted. Will convert <select>" + bookmarksChoose + "</select>. <span id='onlyNewABU'>Or, make a new ABUkmark.</span>");
-						mainButton.dataset.multiple = 1;
+						mainButton.dataset.multiple = "1";
 					}
 				} else {
 					//If it doesn't
@@ -333,25 +371,53 @@ function createPage() {
 					}
 				}
 				mainButton.onclick = function () {
-					ABU(domain, false, true);
+					ABU(domain, false);
 				};
 			});
 		} else {
 			//If we have an ABUkmark for this, according to our data
-			chrome.bookmarks.search("ABUid=" + storage[domain]["ABUid"], function (thisBookmark2) {
-				if (!thisBookmark2) {
+			chrome.bookmarks.search("ABUid=" + storage[domain]["ABUid"], function (existingABUBookmarks) {
+				if (!existingABUBookmarks) {
 					chrome.storage.sync.remove(domain);
 				} else {
-					check = false;
-					for (let i = 0; i < thisBookmark2.length; i++) {
-						if (thisBookmark2[i] && domain == checkLevels(thisBookmark2, getWebpage(thisBookmark2[i].url, thisBookmark2[i].title, storage))) {
-							check = i;
+					let matchingBookmarkIndex = 0;
+
+					for (let bookmarkIndex = 0; bookmarkIndex < existingABUBookmarks.length; bookmarkIndex++) {
+						let domainLevel = "";
+
+						const currentBookmark = existingABUBookmarks[bookmarkIndex];
+						if (!currentBookmark.url) {
+							console.error("Bookmark", currentBookmark);
+							throw new Error("Bookmark contain a URL.");
+						}
+
+						/** @type {WebPageIdCommData} */
+						const webPageIdMessage = {
+							functionName: "getWebPageId",
+							properties: {
+								url: currentBookmark.url,
+								title: currentBookmark.title,
+								storage,
+							},
+						};
+						comms.postMessage(webPageIdMessage);
+						comms.onMessage.addListener(
+							/** @type {string} */ (webPageIdResponse) => {
+								console.log(webPageIdResponse);
+								if (webPageIdResponse && webPageIdResponse !== "") {
+									domainLevel = checkLevels(existingABUBookmarks, webPageIdResponse);
+								}
+							}
+						);
+
+						if (existingABUBookmarks[bookmarkIndex] && domain === domainLevel) {
+							matchingBookmarkIndex = bookmarkIndex;
 						}
 					}
 
 					//GO THROUGH THE FOR LOOP (otherwise won't work with multiple pages and if in a higher-level domain; need to check for that)
 
-					if (thisBookmark2[0] && !isNaN(check)) {
+					if (existingABUBookmarks[0] && !isNaN(matchingBookmarkIndex)) {
 						//If we've found out the bookmark claimed to exist does, set the button so that:
 						mainButton.innerHTML = "Revert to normal bookmark";
 						mainButton.style.backgroundColor = "#f00";
@@ -364,7 +430,7 @@ function createPage() {
 						mainButton.innerHTML = "Create ABUkmark";
 						mainButton.style.backgroundColor = "#619919";
 						mainButton.onclick = function () {
-							ABU(domain, false, false);
+							ABU(domain, false);
 						};
 					}
 				}
@@ -375,33 +441,35 @@ function createPage() {
 
 		//Create buttons for removing ABUkmarks
 		for (let i = 0; i < bookmarks.length; i++) {
+			const bookmarkData = storage[bookmarks[i]];
+			if (!bookmarkData) {
+				throw new Error(`Bookmark data not found in storage: ${bookmarks[i]}`);
+			}
 			//Don't create a button for the webpage domain we're on
 			//Don't create a button for the ABUVersion object, which checks the current version in use.
-			if (bookmarks[i] == domain || bookmarks[i] == "ABUVersion") {
+			if (bookmarks[i] === domain || bookmarks[i] === "ABUVersion") {
 				continue;
 			}
 
 			//Look for the bookmarks as we go through the list, to make sure they still exist.
-			if (
-				chrome.bookmarks.search("ABUid=" + storage[bookmarks[i]]["ABUid"], function (thisBookmark3) {
-					//console.log(storage[bookmarks[i]]["ABUid"],"Bookmark is: ",thisBookmark3,thisBookmark3.length);
+			chrome.bookmarks.search("ABUid=" + bookmarkData.ABUid, function (thisBookmark3) {
+				//console.log(storage[bookmarks[i]]["ABUid"],"Bookmark is: ",thisBookmark3,thisBookmark3.length);
 
-					//If a bookmark in the list doesn't exist
-					if (thisBookmark3.length === 0) {
-						let ABUid = storage[bookmarks[i]]["ABUid"];
+				//If a bookmark in the list doesn't exist
+				if (thisBookmark3.length === 0) {
+					let ABUid = bookmarkData.ABUid;
 
-						//Remove the info
-						chrome.storage.sync.remove(bookmarks[i]);
+					//Remove the info
+					chrome.storage.sync.remove(bookmarks[i]);
 
-						//Remove the element, if it exists
-						if ((ABUid = document.querySelector('button[data-id="' + ABUid + '"]'))) ABUid.remove();
-					}
-				})
-			);
+					//Remove the element, if it exists
+					let buttonElement = document.querySelector(`button[data-id="${ABUid}"]`);
+					if (buttonElement) buttonElement.remove();
+				}
+			});
 
 			//Add the button if it exists
-			anywhereButtons +=
-				"<button data-id='" + storage[Object.keys(storage)[i]]["ABUid"] + "' data-domain='" + Object.keys(storage)[i] + "'>&times; <img src='" + storage[Object.keys(storage)[i]]["favIconUrl"] + "'> " + Object.keys(storage)[i] + "</button>";
+			anywhereButtons += `<button data-id='${bookmarkData.ABUid}' data-domain='${bookmarks[i]}'>&times; <img src='${bookmarkData.favIconUrl}'> ${bookmarks[i]}</button>`;
 		}
 
 		//If the user doesn't have any ABUkmarks, don't show the horizontal rule
@@ -411,15 +479,22 @@ function createPage() {
 
 		console.log("Any favicons not found will produce errors below (it's not really worth worrying about)");
 
-		document.getElementById("abu-anywhere").innerHTML = anywhereButtons;
+		Get.elementByID("abu-anywhere").innerHTML = anywhereButtons;
 
-		let buttons = document.getElementById("abu-anywhere").children;
+		let buttons = Get.elementByID("abu-anywhere").children;
 		let images = document.getElementsByTagName("img");
 
 		//Add functions for each button
 		for (let ii = 0; ii < buttons.length; ii++) {
-			buttons[ii].onclick = function () {
-				unABU(this.dataset.domain, this.dataset.id);
+			const element = buttons[ii];
+			// Skip non-button elements
+			if (!(element instanceof HTMLButtonElement)) {
+				console.log("Skipping non-button element at index", ii);
+				continue;
+			}
+
+			element.onclick = function () {
+				unABU(element.dataset.domain, element.dataset.id);
 			};
 
 			//Hide any images that fail to load properly
@@ -442,7 +517,7 @@ function ABU(input, mustMakeNew) {
 	inArray = 0;
 	inArrayDomain = "";
 
-	if (mainButton.dataset.multiple == 1) {
+	if (mainButton.dataset.multiple === "1") {
 		inArray = document.getElementsByTagName("SELECT")[0].selectedIndex;
 
 		//Get the bookmark to change with this:
@@ -480,8 +555,8 @@ function ABU(input, mustMakeNew) {
 
 			/** @type {BookmarkCommData} */
 			const message = {
-				function: "saveBookmarkData",
-				data: {
+				functionName: "saveBookmarkData",
+				properties: {
 					bookmarkKey: input,
 					bookmarkId: ABUid,
 					favIconUrl,
@@ -506,11 +581,11 @@ function ABU(input, mustMakeNew) {
 //Create a new bookmark to be an ABUkmark
 function createABUkmark(input, parentId) {
 	const ABUid = Date.now();
-	chrome.bookmarks.create({ parentId: parentId, title: title + " (ABU)", url: createABURL(url, ABUid) }, function (newBookmark) {
+	chrome.bookmarks.create({ parentId, title: title + " (ABU)", url: createABURL(url, ABUid) }, function (newBookmark) {
 		/** @type {BookmarkCommData} */
 		const message = {
-			function: "saveBookmarkData",
-			data: {
+			functionName: "saveBookmarkData",
+			properties: {
 				bookmarkKey: input,
 				bookmarkId: ABUid,
 				favIconUrl,
@@ -536,7 +611,7 @@ function setNotification(input) {
 
 	if (document.getElementById("onlyNewABU")) {
 		document.getElementById("onlyNewABU").onclick = function () {
-			ABU(domain, true, false);
+			ABU(domain, true);
 		};
 	}
 
@@ -564,8 +639,7 @@ if (document.getElementById("current-page")) {
 	console.log("ABU popup loaded!");
 
 	//Have notifications depending on what's done
-	mainButton = document.getElementById("current-page");
-	mainButton.dataset.multiple = 0;
+	mainButton.dataset.multiple = "0";
 
 	//Get URL
 	chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
@@ -573,7 +647,22 @@ if (document.getElementById("current-page")) {
 		//Need to get storage here, for getting the webpage
 		chrome.storage.sync.get(function (storage) {
 			url = tabs[0].url;
-			domain = getWebpage(url, tabs[0].title, storage);
+			/** @type {WebPageIdCommData} */
+			const message = {
+				functionName: "getWebPageId",
+				properties: {
+					url,
+					title: tabs[0].title,
+					storage,
+				},
+			};
+			comms.postMessage(message);
+			comms.onMessage.addListener((/** @type {string} */ returnMessage) => {
+				console.log("Return message current page:", returnMessage);
+				if (returnMessage && returnMessage !== "") {
+					domain = returnMessage;
+				}
+			});
 			title = tabs[0].title;
 			favIconUrl = tabs[0].favIconUrl;
 
@@ -590,4 +679,79 @@ if (document.getElementById("current-page")) {
 			createPage();
 		});
 	});
+}
+
+/**
+ * Creates utility functions for retrieving DOM elements by ID, tag, or class.
+ */
+function createGetUtilities() {
+	return {
+		/**
+		 * Gets an element by its ID.
+		 * @param {string} id - The element ID.
+		 * @returns {HTMLElement} The found element.
+		 * @throws {Error} If element is not found.
+		 */
+		elementByID(id) {
+			const item = document.getElementById(id);
+			if (item === null) {
+				console.log("element:", item);
+				throw new Error("Element is null in elementByID.");
+			} else {
+				return item;
+			}
+		},
+		/**
+		 * Gets a button element by its ID.
+		 * @param {string} id - The button ID.
+		 * @returns {HTMLButtonElement} The found button element.
+		 * @throws {Error} If element is not found or is not a button.
+		 */
+		button(id) {
+			const item = document.getElementById(id);
+			if (item === null) {
+				console.log("element:", item);
+				throw new Error("Element is null in button.");
+			} else {
+				if (item instanceof HTMLButtonElement) {
+					return item;
+				} else {
+					throw new Error("Element is not a button.");
+				}
+			}
+		},
+		/**
+		 * Gets elements by tag name.
+		 * @param {string} tag - The tag name.
+		 * @returns {HTMLCollectionOf<Element>} Collection of found elements.
+		 * @throws {Error} If no elements are found.
+		 */
+		elementByTag(tag) {
+			const item = document.getElementsByTagName(tag);
+			if (item === null) {
+				console.log("element:", item);
+				throw new Error("Element is null in elementByTag.");
+			} else {
+				return item;
+			}
+		},
+		/**
+		 * Gets elements by class name.
+		 * @param {string} className - The class name.
+		 * @returns {Element[]} Array of found elements.
+		 * @throws {Error} If any element is null.
+		 */
+		elementsByClass(className) {
+			const items = document.getElementsByClassName(className);
+			const checked_items = [];
+			for (const item of items) {
+				if (item === null) {
+					console.log("element:", item);
+					throw new Error("Element is null in elementByClass.");
+				}
+				checked_items.push(item);
+			}
+			return checked_items;
+		},
+	};
 }
