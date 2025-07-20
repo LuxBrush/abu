@@ -18,12 +18,7 @@ const functions = {
 		try {
 			const { bookmarkKey, bookmarkId, favIconUrl } = properties;
 			const storageData = { [bookmarkKey]: { "ABUid": bookmarkId, favIconUrl } };
-			chrome.storage.sync.set(storageData, () => {
-				if (chrome.runtime.lastError) {
-					console.error(chrome.runtime.lastError);
-					return false;
-				}
-			});
+			chrome.storage.sync.set(storageData);
 			return true;
 		} catch (error) {
 			console.error(error);
@@ -54,74 +49,103 @@ const functions = {
 	getWebPageId(properties) {
 		const { url, title, storage } = properties;
 
-		//Ignore the last section of the URL every time
+		// Extract URL path up to numbered sections or query strings
+		// This regex matches: protocol://domain/path/ but stops before numbered sections
+		const pathMatch = /(\S+\/\/+[^\/]+[^\d\?]+\/)+(?!$)/.exec(url);
+		const urlToProcess = pathMatch?.[0] || url;
 
-		//console.log(input);
+		// Remove protocol and optional www prefix
+		const protocolAndWwwRegex = /[^\/]+\/\/(www\.)?/;
+		let outputUrl = urlToProcess.replace(protocolAndWwwRegex, "");
 
-		//Get everything up until 1) a numbered section (past the domain) or 2) a querystring
-		let outputUrl = /(\S+\/\/+[^\/]+[^\d\?]+\/)+(?!$)/.exec(url);
-		//console.log(output);
+		// Get everything up until 1) a numbered section (past the domain) or 2) a querystring
 
-		//Remove http (and www too, if it's present)
+		// Remove http (and www too, if it's present)
 		if (outputUrl) outputUrl = outputUrl[0].replace(/[^\/]+\/\/(www.)?/, "");
 		else outputUrl = url.replace(/[^\/]+\/\/(www.)?/, "");
 
-		//console.log(input,output);
-
-		//Check for special key folders; go up to those
+		// Check for special key folders; go up to those
 		/*
 			/blog/
 			/comic/
 		*/
-		let keywordCheck = /.+\/(blog|comic)\//.exec(outputUrl);
-		if (keywordCheck) outputUrl = keywordCheck[0];
+		const keywordMatch = /.+\/(blog|comic)\//.exec(outputUrl);
+		if (keywordMatch !== null && keywordMatch[0]) {
+			outputUrl = keywordMatch[0];
+		}
 
-		//Check for indicative keywords; go up to those
-		let indicativeCheck = /.+\/(?=season-|ep-|episode-|page-|p-)/.exec(outputUrl);
-		if (indicativeCheck) outputUrl = indicativeCheck[0];
+		// Check for indicative keywords; go up to those
+		const indicativeMatch = /.+\/(?=season-|ep-|episode-|page-|p-)/.exec(outputUrl);
+		if (indicativeMatch !== null && indicativeMatch[0]) {
+			outputUrl = indicativeMatch[0];
+		}
 
-		/////////ODD-URL WEBSITES COMPATIBILITY/////////
-		keywordCheck = null;
+		///////// ODD-URL WEBSITES COMPATIBILITY /////////
+		/** @type {RegExpExecArray | null} */
+		let websiteMatch = null;
 
-		//WEBTOONS// webtoons.com/language/genre/name/
-		if (!keywordCheck) keywordCheck = /webtoons.com\/[^/]+\/[^/]+\/[^/]+\//.exec(url);
+		// WEBTOONS // webtoons.com/language/genre/name/
+		if (websiteMatch === null) {
+			websiteMatch = /webtoons\.com\/[^/]+\/[^/]+\/[^/]+\//.exec(url);
+		}
 
-		//LEZHIM// lezhin.com/language/comic/title
-		if (!keywordCheck) keywordCheck = /lezhin.com\/[^/]+\/comic\/[^/]+\//.exec(url);
+		// LEZHIN // lezhin.com/language/comic/title
+		if (websiteMatch === null) {
+			websiteMatch = /lezhin\.com\/[^/]+\/comic\/[^/]+\//.exec(url);
+		}
 
-		//MANGAHUB.IO// mangahub.com/chapter/title
-		if (!keywordCheck) keywordCheck = /mangahub.io\/chapter\/[^/]+\//.exec(url);
+		// MANGAHUB.IO // mangahub.com/chapter/title
+		if (websiteMatch === null) {
+			websiteMatch = /mangahub\.io\/chapter\/[^/]+\//.exec(url);
+		}
 
-		if (keywordCheck) outputUrl = keywordCheck[0];
+		if (websiteMatch !== null && websiteMatch[0]) {
+			outputUrl = websiteMatch[0];
+		}
 
 		/////////SPECIAL WEBSITE compatibility/////////
+		/** @type {string | null} */
 		let special = null;
 
 		//TAPAS// tapas.io/episode/ (same for every comic; we have to test by title)
 		//console.log(input);
-		if (/tapas.io\/(series|episode)\//.test(url) && title) {
-			//Either get the title if separated by :: or by |
-			special = /.+(?=\s::)/.exec(title) || /.+(?=\s\|)/.exec(title);
-			//After get one, get the first item:
-			special = special[0];
+		if (/tapas\.io\/(series|episode)\//.test(url) && title) {
+			// Extract comic title from page title (separated by :: or |)
+			const titleSeparatorRegex = /.+(?=\s(?::|\|))/;
+			const titleMatch = titleSeparatorRegex.exec(title);
 
-			//The output needs to be tapas.io/ if we're in this situation, otherwise it'll mess up too often (with series/episode switching, other ABUkmarks on the "same level" but different comics)
+			if (titleMatch === null || !titleMatch[0] || titleMatch[0].trim() === "") {
+				throw new Error(`Failed to extract comic title from TAPAS page title: "${title}"`);
+			}
+
+			special = titleMatch[0].trim();
+
+			// Use generic tapas.io/ to avoid issues with series/episode URL switching
 			outputUrl = "tapas.io/";
 		}
 
 		//YOUTUBE PLAYLIST// https://www.youtube.com/playlist?list=id
 		if (/youtube.com\/.+list=/.test(url)) {
 			//Get the playlist id
-			special = /(?:\?|&)list=[^?&]*/.exec(url)[0];
+			const playlistMatch = /(?:\?|&)list=[^?&]*/.exec(url);
+			if (playlistMatch) {
+				special = playlistMatch[0];
+			}
 		} else if (/youtube.com\/watch\?v=[^?&]*/.test(url)) {
 			//Get the video id and track time
-			special = /(?:\?|&)v=[^?&]*/.exec(url)[0];
+			const videoMatch = /(?:\?|&)v=[^?&]*/.exec(url);
+			if (videoMatch) {
+				special = videoMatch[0];
+			}
 		}
 
 		//GOOGLE SHEETS PRESENTATION// https://docs.google.com/presentation/d/slideshow_id/relevant_stuff
 		if (/docs.google.com\/presentation\/d\/.+\//.test(url)) {
 			//Get the slideshow url
-			special = /docs.google.com\/presentation\/d\/.+\//.exec(url)[0];
+			const presentationMatch = /docs.google.com\/presentation\/d\/.+\//.exec(url);
+			if (presentationMatch) {
+				special = presentationMatch[0];
+			}
 		}
 
 		//console.log(special);
