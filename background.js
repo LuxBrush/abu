@@ -58,12 +58,6 @@ const functions = {
 		const protocolAndWwwRegex = /[^\/]+\/\/(www\.)?/;
 		let outputUrl = urlToProcess.replace(protocolAndWwwRegex, "");
 
-		// Get everything up until 1) a numbered section (past the domain) or 2) a querystring
-
-		// Remove http (and www too, if it's present)
-		if (outputUrl) outputUrl = outputUrl[0].replace(/[^\/]+\/\/(www.)?/, "");
-		else outputUrl = url.replace(/[^\/]+\/\/(www.)?/, "");
-
 		// Check for special key folders; go up to those
 		/*
 			/blog/
