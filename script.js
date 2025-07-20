@@ -21,124 +21,46 @@ let warning = "";
 
 console.log("May get an error: Unchecked runtime.lastError: The tab was closed. The code should keep running, but there's no way to check for if a tab exists; only to hide the error. I opted for just letting it be. :P");
 
-//Get the webpage to save the ABUkmark to
-function getWebpage(input, title, storage) {
-	//Ignore the last section of the URL every time
+/**
+ * Traverses up URL path levels to find the highest level that exists in the provided object.
+ *
+ * This function is used to find the most appropriate URL path level for bookmark storage.
+ * It works by progressively removing path segments from the end of the URL and checking
+ * if the resulting path exists as a key in the provided object. This helps in finding
+ * the most general bookmark that applies to the current page.
+ *
+ * @param {ABUStorage} storage - The storage object to check against, typically containing bookmarked URLs as keys
+ * @param {string} url - The URL path or identifier to check
+ * @returns {string} The highest level path that exists in the object, or the original input if none found
+ */
+function checkLevels(storage, url) {
+	// Starting with the full input path
+	let testUrl = url,
+		outputUrl = url;
 
-	//console.log(input);
-
-	//Get everything up until 1) a numbered section (past the domain) or 2) a querystring
-	let output = /(\S+\/\/+[^\/]+[^\d\?]+\/)+(?!$)/.exec(input);
-	//console.log(output);
-
-	//Remove http (and www too, if it's present)
-	if (output) output = output[0].replace(/[^\/]+\/\/(www.)?/, "");
-	else output = input.replace(/[^\/]+\/\/(www.)?/, "");
-
-	//console.log(input,output);
-
-	//Check for special key folders; go up to those
-	/*
-		/blog/
-		/comic/
-	*/
-	let keywordCheck = /.+\/(blog|comic)\//.exec(output);
-	if (keywordCheck) output = keywordCheck[0];
-
-	//Check for indicative keywords; go up to those
-	let indicativeCheck = /.+\/(?=season-|ep-|episode-|page-|p-)/.exec(output);
-	if (indicativeCheck) output = indicativeCheck[0];
-
-	/////////ODD-URL WEBSITES COMPATABILITY/////////
-	keywordCheck = null;
-
-	//WEBTOONS// webtoons.com/language/genre/name/
-	if (!keywordCheck) keywordCheck = /webtoons.com\/[^/]+\/[^/]+\/[^/]+\//.exec(input);
-
-	//LEZHIM// lezhin.com/language/comic/title
-	if (!keywordCheck) keywordCheck = /lezhin.com\/[^/]+\/comic\/[^/]+\//.exec(input);
-
-	//MANGAHUB.IO// mangahub.com/chapter/title
-	if (!keywordCheck) keywordCheck = /mangahub.io\/chapter\/[^/]+\//.exec(input);
-
-	if (keywordCheck) output = keywordCheck[0];
-
-	/////////SPECIAL WEBSITE COMPATABILITY/////////
-	let special = null;
-
-	//TAPAS// tapas.io/episode/ (same for every comic; we have to test by title)
-	//console.log(input);
-	if (/tapas.io\/(series|episode)\//.test(input) && title) {
-		//Either get the title if separated by :: or by |
-		special = /.+(?=\s::)/.exec(title) || /.+(?=\s\|)/.exec(title);
-		//After get one, get the first item:
-		special = special[0];
-
-		//The output needs to be tapas.io/ if we're in this situation, otherwise it'll mess up too often (with series/episode switching, other ABUkmarks on the "same level" but different comics)
-		output = "tapas.io/";
+	// Handle special case: if input doesn't contain a slash, it's likely a title rather than a URL
+	// In this case, return the input as is without further processing
+	if (url.indexOf("/") === -1) {
+		return url;
 	}
 
-	//YOUTUBE PLAYLIST// https://www.youtube.com/playlist?list=id
-	if (/youtube.com\/.+list=/.test(input)) {
-		//Get the playlist id
-		special = /(?:\?|&)list=[^?&]*/.exec(input)[0];
-	} else if (/youtube.com\/watch\?v=[^?&]*/.test(input)) {
-		//Get the video id and track time
-		special = /(?:\?|&)v=[^?&]*/.exec(input)[0];
-	}
-
-	//GOOGLE SHEETS PRESENTATION// https://docs.google.com/presentation/d/slideshow_id/relevant_stuff
-	if (/docs.google.com\/presentation\/d\/.+\//.test(input)) {
-		//Get the slideshow url
-		special = /docs.google.com\/presentation\/d\/.+\//.exec(input)[0];
-	}
-
-	//console.log(special);
-
-	//If a special, unusual value was passed:
-	if (special) {
-		//See if either the special exists, or a higher level does not exist; in either case, we'll use the special value
-		if (storage[special] || !storage[checkLevels(storage, output)]) {
-			output = special;
-		}
-	}
-
-	//console.log(output);
-
-	return output;
-}
-
-function checkLevels(object, input) {
-	//console.log("Looking for higher level...",object,input);
-
-	let test = input,
-		output = input;
-
-	//If we're on a special-case website where the title is passed instead of the URL, return with it
-	if (input.indexOf("/") === -1) {
-		//console.log("Returning!");
-		return input;
-	}
-
-	//Test up to 10 times for deeper names
+	// Attempt to find existing paths by progressively removing segments from the end
+	// Limited to 10 iterations to prevent infinite loops on very long paths
 	for (let i = 0; i < 10; i++) {
-		//console.log(object[test]);
-
-		//If it exists, return it
-		if (object[test]) {
-			output = test;
+		// If the current test path exists in our object, use it as output and stop searching
+		if (storage[testUrl]) {
+			outputUrl = testUrl;
 			break;
-		} //If it doesn't exist, run again
+		}
 
-		//Remove a subpage block from the end
-		test = test.substr(0, test.length - 1).substr(0, test.lastIndexOf("/") + 1);
+		// If not found, remove the last path segment and try again
+		// This removes the trailing slash and everything after the previous slash
+		testUrl = testUrl.slice(0, testUrl.length - 1).slice(0, testUrl.lastIndexOf("/") + 1);
 
-		//If we run 10 times and don't find a new thing, we'll just use the original input
+		// If we've tried 10 times without finding a match, we'll use the original input
 	}
 
-	//console.log("Putting out "+output);
-
-	return output;
+	return outputUrl;
 }
 
 //Any changes to the URL call this- even a querystring change
