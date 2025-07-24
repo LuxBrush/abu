@@ -14,19 +14,44 @@ let warning = "";
 
 console.log("May get an error: Unchecked runtime.lastError: The tab was closed. The code should keep running, but there's no way to check for if a tab exists; only to hide the error. I opted for just letting it be. :P");
 
-//Get the webpage to save the ABUkmark to
-function getWebpage(input, title, storage) {
+/**
+ * Processes a URL to determine the appropriate level for ABUkmark creation.
+ *
+ * This function normalizes URLs and identifies the most relevant path segments
+ * for different types of content (comics, blogs, videos, etc.). It handles special
+ * cases for various websites with non-standard URL structures.
+ *
+ * @param {string} url - The URL to process
+ * @param {string} title - The title of the page (used for certain special cases)
+ * @param {StorageObject} storage - The storage object containing ABUkmark configurations
+ * @returns {string} The processed URL segment to use as an ABUkmark key
+ *
+ * @example
+ * // Basic URL processing
+ * getWebpage('https://example.com/blog/post-123', 'Blog Post');
+ * // Returns: 'example.com/blog/'
+ *
+ * @example
+ * // Special case handling for YouTube
+ * getWebpage('https://www.youtube.com/watch?v=dQw4w9WgXcQ', 'YouTube Video');
+ * // Returns: '?v=dQw4w9WgXcQ'
+ *
+ * @example
+ * // Special case for Tapas
+ * getWebpage('https://tapas.io/episode/12345', 'Series Name :: Episode Title');
+ * // Returns: 'tapas.io/'
+ */
+function getWebpage(url, title, storage) {
 	//Ignore the last section of the URL every time
 
 	//console.log(input);
 
 	//Get everything up until 1) a numbered section (past the domain) or 2) a querystring
-	let output = /(\S+\/\/+[^\/]+[^\d\?]+\/)+(?!$)/.exec(input);
-	//console.log(output);
+	let match = /(\S+\/\/+[^\/]+[^\d\?]+\/)+(?!$)/.exec(url);
+	//console.log(match);
 
 	//Remove http (and www too, if it's present)
-	if (output) output = output[0].replace(/[^\/]+\/\/(www.)?/, "");
-	else output = input.replace(/[^\/]+\/\/(www.)?/, "");
+	let output = match && match[0] ? match[0].replace(/[^\/]+\/\/(www.)?/, "") : url.replace(/[^\/]+\/\/(www.)?/, "");
 
 	//console.log(input,output);
 
@@ -46,13 +71,13 @@ function getWebpage(input, title, storage) {
 	let oddUrlCheck = null;
 
 	//WEBTOONS// webtoons.com/language/genre/name/
-	if (!oddUrlCheck) oddUrlCheck = /webtoons.com\/[^/]+\/[^/]+\/[^/]+\//.exec(input);
+	if (!oddUrlCheck) oddUrlCheck = /webtoons.com\/[^/]+\/[^/]+\/[^/]+\//.exec(url);
 
 	//LEZHIM// lezhin.com/language/comic/title
-	if (!oddUrlCheck) oddUrlCheck = /lezhin.com\/[^/]+\/comic\/[^/]+\//.exec(input);
+	if (!oddUrlCheck) oddUrlCheck = /lezhin.com\/[^/]+\/comic\/[^/]+\//.exec(url);
 
 	//MANGAHUB.IO// mangahub.com/chapter/title
-	if (!oddUrlCheck) oddUrlCheck = /mangahub.io\/chapter\/[^/]+\//.exec(input);
+	if (!oddUrlCheck) oddUrlCheck = /mangahub.io\/chapter\/[^/]+\//.exec(url);
 
 	if (oddUrlCheck) output = oddUrlCheck[0];
 
@@ -61,7 +86,7 @@ function getWebpage(input, title, storage) {
 
 	//TAPAS// tapas.io/episode/ (same for every comic; we have to test by title)
 	//console.log(input);
-	if (/tapas.io\/(series|episode)\//.test(input) && title) {
+	if (/tapas.io\/(series|episode)\//.test(url) && title) {
 		//Either get the title if separated by :: or by |
 		special = /.+(?=\s::)/.exec(title) || /.+(?=\s\|)/.exec(title);
 		//After get one, get the first item:
@@ -72,18 +97,18 @@ function getWebpage(input, title, storage) {
 	}
 
 	//YOUTUBE PLAYLIST// https://www.youtube.com/playlist?list=id
-	if (/youtube.com\/.+list=/.test(input)) {
+	if (/youtube.com\/.+list=/.test(url)) {
 		//Get the playlist id
-		special = /(?:\?|&)list=[^?&]*/.exec(input)[0];
-	} else if (/youtube.com\/watch\?v=[^?&]*/.test(input)) {
+		special = /(?:\?|&)list=[^?&]*/.exec(url)[0];
+	} else if (/youtube.com\/watch\?v=[^?&]*/.test(url)) {
 		//Get the video id and track time
-		special = /(?:\?|&)v=[^?&]*/.exec(input)[0];
+		special = /(?:\?|&)v=[^?&]*/.exec(url)[0];
 	}
 
 	//GOOGLE SHEETS PRESENTATION// https://docs.google.com/presentation/d/slideshow_id/relevant_stuff
-	if (/docs.google.com\/presentation\/d\/.+\//.test(input)) {
+	if (/docs.google.com\/presentation\/d\/.+\//.test(url)) {
 		//Get the slideshow url
-		special = /docs.google.com\/presentation\/d\/.+\//.exec(input)[0];
+		special = /docs.google.com\/presentation\/d\/.+\//.exec(url)[0];
 	}
 
 	//console.log(special);
@@ -91,7 +116,7 @@ function getWebpage(input, title, storage) {
 	//If a special, unusual value was passed:
 	if (special) {
 		//See if either the special exists, or a higher level does not exist; in either case, we'll use the special value
-		if (storage[special] || !storage[checkLevels(storage, output)]) {
+		if (storage.websites[special] || !storage.websites[checkLevels(storage, output)]) {
 			output = special;
 		}
 	}
