@@ -21,5 +21,5 @@
 		"default_popup": "popup.html",
 		"default_title": "ABU (Automatic Bookmark Updater)"
 	},
-	"permissions": ["tabs", "storage", "bookmarks", "<all_urls>", ""]
+	"permissions": ["tabs", "storage", "bookmarks", "<all_urls>"]
 }

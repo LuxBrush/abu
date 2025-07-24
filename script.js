@@ -12,6 +12,8 @@ let favIconUrl = "";
 //Warn about home page ABUkmarks going everywhere if they're on the home page
 let warning = "";
 
+// Buttons
+
 console.log("May get an error: Unchecked runtime.lastError: The tab was closed. The code should keep running, but there's no way to check for if a tab exists; only to hide the error. I opted for just letting it be. :P");
 
 /**
@@ -211,7 +213,7 @@ chrome.tabs.onActivated.addListener(function (activatedTab) {
  * This function is called when a tab is updated or activated. It handles special
  * cases like YouTube video progress tracking and updates the browser action icon
  * based on whether the current URL has an associated ABUkmark.
- * 
+ *
  * @param {chrome.tabs.Tab} thisTab - The tab object containing information about the active tab
  */
 function updateTabInfo(thisTab) {
@@ -611,4 +613,87 @@ if (document.getElementById("current-page")) {
 			createPage();
 		});
 	});
+}
+
+function Check() {
+	return {
+		Get: {
+			/**
+			 * Gets an element by its ID.
+			 * @param {string} id - The element ID.
+			 * @returns {HTMLElement} The found element.
+			 * @throws {Error} If element is not found.
+			 */
+			elementByID(id) {
+				const item = document.getElementById(id);
+				if (item === null) {
+					console.log("element:", item);
+					throw new Error("Element is null in elementByID.");
+				} else {
+					return item;
+				}
+			},
+			/**
+			 * Gets a button element by its ID.
+			 * @param {string} id - The button ID.
+			 * @returns {HTMLButtonElement} The found button element.
+			 * @throws {Error} If element is not found or is not a button.
+			 */
+			button(id) {
+				const item = document.getElementById(id);
+				if (item === null) {
+					console.log("element:", item);
+					throw new Error("Element is null in button.");
+				} else {
+					if (item instanceof HTMLButtonElement) {
+						return item;
+					} else {
+						throw new Error("Element is not a button.");
+					}
+				}
+			},
+			/**
+			 * Gets elements by tag name.
+			 * @param {string} tag - The tag name.
+			 * @returns {HTMLCollectionOf<Element>} Collection of found elements.
+			 * @throws {Error} If no elements are found.
+			 */
+			elementByTag(tag) {
+				const item = document.getElementsByTagName(tag);
+				if (item === null) {
+					console.log("element:", item);
+					throw new Error("Element is null in elementByTag.");
+				} else {
+					return item;
+				}
+			},
+			/**
+			 * Gets elements by class name.
+			 * @param {string} className - The class name.
+			 * @returns {Element[]} Array of found elements.
+			 * @throws {Error} If any element is null.
+			 */
+			elementsByClass(className) {
+				const elements = Array.from(document.getElementsByClassName(className));
+				const checked_items = [];
+				for (const element of elements) {
+					if (element === null) {
+						console.log("element:", element);
+						continue;
+					}
+					checked_items.push(element);
+				}
+				return checked_items;
+			},
+			/**
+			 * Gets the bounding client rect of an element.
+			 * @param {string} id - The element ID.
+			 * @returns {DOMRect} The element's bounding client rect.
+			 */
+			boundingClientRect(id) {
+				const element = this.elementByID(id);
+				return element.getBoundingClientRect();
+			},
+		},
+	};
 }
