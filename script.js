@@ -116,7 +116,7 @@ function normalizeContentUrl(url, title, storage) {
 	//If a special, unusual value was passed:
 	if (special) {
 		//See if either the special exists, or a higher level does not exist; in either case, we'll use the special value
-		if (storage[special] || !storage[checkLevels(storage, output)]) {
+		if (storage[special] || !storage[resolveUrlPath(storage, output)]) {
 			output = special;
 		}
 	}
@@ -126,37 +126,45 @@ function normalizeContentUrl(url, title, storage) {
 	return output;
 }
 
-function checkLevels(object, input) {
-	//console.log("Looking for higher level...",object,input);
+/**
+ * Finds the highest-level matching URL path in the storage object by progressively
+ * removing subdirectories from the end of the input path.
+ *
+ * @param {StorageObject} storage - The storage object containing URL paths as keys
+ * @param {string} urlPath - The URL path to search for in the storage
+ * @returns {string} The highest-level matching path found in storage, or the original urlPath if no match is found
+ */
+function resolveUrlPath(storage, urlPath) {
+	//console.log("Looking for higher level...", storage, urlPath);
 
-	let test = input,
-		output = input;
+	let currentPath = urlPath,
+		matchingPath = urlPath;
 
-	//If we're on a special-case website where the title is passed instead of the URL, return with it
-	if (input.indexOf("/") === -1) {
+	// If we're on a special-case website where the title is passed instead of the URL, return it as-is
+	if (urlPath.indexOf("/") === -1) {
 		//console.log("Returning!");
-		return input;
+		return urlPath;
 	}
 
-	//Test up to 10 times for deeper names
+	// Test up to 10 times for deeper names
 	for (let i = 0; i < 10; i++) {
-		//console.log(object[test]);
+		//console.log(storage[currentPath]);
 
-		//If it exists, return it
-		if (object[test]) {
-			output = test;
+		// If the current path exists in the storage, use it as the best match
+		if (storage[currentPath]) {
+			matchingPath = currentPath;
 			break;
-		} //If it doesn't exist, run again
+		}
 
-		//Remove a subpage block from the end
-		test = test.substr(0, test.length - 1).substr(0, test.lastIndexOf("/") + 1);
+		// Remove the last path segment and try again
+		currentPath = currentPath.substring(0, currentPath.length - 1).substring(0, currentPath.lastIndexOf("/") + 1);
 
-		//If we run 10 times and don't find a new thing, we'll just use the original input
+		// If we run 10 times and don't find a match, we'll just use the original input
 	}
 
-	//console.log("Putting out "+output);
+	//console.log("Putting out " + matchingPath);
 
-	return output;
+	return matchingPath;
 }
 
 //Any changes to the URL call this- even a querystring change
@@ -231,7 +239,7 @@ function updateTabInfo(thisTab) {
 	chrome.storage.sync.get(function (storage) {
 		//NOT DONE YET: If the page is part of a higher domain that we ARE keeping track of but we don't have a direct domain for this one, let's go up some levels:
 
-		domain = checkLevels(storage, normalizeContentUrl(thisTab.url, thisTab.title, storage));
+		domain = resolveUrlPath(storage, normalizeContentUrl(thisTab.url, thisTab.title, storage));
 
 		// In case this gets changed elsewhere, keep it the same here
 		let localDomain = domain;
@@ -300,7 +308,7 @@ function createPage() {
 
 		anywhereButtons = "";
 
-		domain = checkLevels(storage, domain);
+		domain = resolveUrlPath(storage, domain);
 
 		//Setup buttons
 		if (!storage[domain]) {
@@ -325,7 +333,7 @@ function createPage() {
 
 							overwriteWarning(thisBookmark1[i]);
 
-							dropdownDomain = checkLevels(storage, normalizeContentUrl(thisBookmark1[i].url, thisBookmark1[i].title, storage)); //checkLevels(thisBookmark1[i].url);
+							dropdownDomain = resolveUrlPath(storage, normalizeContentUrl(thisBookmark1[i].url, thisBookmark1[i].title, storage)); //checkLevels(thisBookmark1[i].url);
 
 							//console.log(dropdownDomain);
 
@@ -367,7 +375,7 @@ function createPage() {
 				} else {
 					check = false;
 					for (let i = 0; i < thisBookmark2.length; i++) {
-						if (thisBookmark2[i] && domain == checkLevels(thisBookmark2, normalizeContentUrl(thisBookmark2[i].url, thisBookmark2[i].title, storage))) {
+						if (thisBookmark2[i] && domain == resolveUrlPath(thisBookmark2, normalizeContentUrl(thisBookmark2[i].url, thisBookmark2[i].title, storage))) {
 							check = i;
 						}
 					}
