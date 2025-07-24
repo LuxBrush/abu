@@ -1,3 +1,4 @@
+const { Get } = Check();
 //Icons
 const activeIcons = { "128": "icons/128blue.png" };
 const inactiveIcons = { "128": "icons/128gray.png" };
@@ -13,6 +14,7 @@ let favIconUrl = "";
 let warning = "";
 
 // Buttons
+const mainButton = Get.elementByID("current-page");
 
 console.log("May get an error: Unchecked runtime.lastError: The tab was closed. The code should keep running, but there's no way to check for if a tab exists; only to hide the error. I opted for just letting it be. :P");
 
@@ -300,7 +302,7 @@ function createPage() {
 			chrome.storage.sync.set({ "ABUVersion": ABUVersion });
 		}
 
-		mainButton.dataset.multiple = 0;
+		mainButton.dataset.multiple = "0";
 		//console.log(domain,domain.substr(0,domain.length-2).indexOf("/")==-1);
 
 		console.log("url is", url);
@@ -361,7 +363,7 @@ function createPage() {
 							}
 						}
 						setNotification(warning + thisBookmark1.length + " bookmarks spotted. Will convert <select>" + bookmarksChoose + "</select>. <span id='onlyNewABU'>Or, make a new ABUkmark.</span>");
-						mainButton.dataset.multiple = 1;
+						mainButton.dataset.multiple = "1";
 					}
 				} else {
 					//If it doesn't
@@ -483,7 +485,7 @@ function ABU(input, mustMakeNew) {
 	inArray = 0;
 	inArrayDomain = "";
 
-	if (mainButton.dataset.multiple == 1) {
+	if (mainButton.dataset.multiple === "1") {
 		inArray = document.getElementsByTagName("SELECT")[0].selectedIndex;
 
 		//Get the bookmark to change with this:
@@ -587,8 +589,7 @@ if (document.getElementById("current-page")) {
 
 	//Have notifications depending on what's done
 
-	mainButton = document.getElementById("current-page");
-	mainButton.dataset.multiple = 0;
+	mainButton.dataset.multiple = "0";
 
 	//Get URL
 	chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
