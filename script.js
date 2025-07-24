@@ -41,7 +41,7 @@ console.log("May get an error: Unchecked runtime.lastError: The tab was closed. 
  * getWebpage('https://tapas.io/episode/12345', 'Series Name :: Episode Title');
  * // Returns: 'tapas.io/'
  */
-function getWebpage(url, title, storage) {
+function normalizeContentUrl(url, title, storage) {
 	//Ignore the last section of the URL every time
 
 	//console.log(input);
@@ -231,7 +231,7 @@ function updateTabInfo(thisTab) {
 	chrome.storage.sync.get(function (storage) {
 		//NOT DONE YET: If the page is part of a higher domain that we ARE keeping track of but we don't have a direct domain for this one, let's go up some levels:
 
-		domain = checkLevels(storage, getWebpage(thisTab.url, thisTab.title, storage));
+		domain = checkLevels(storage, normalizeContentUrl(thisTab.url, thisTab.title, storage));
 
 		// In case this gets changed elsewhere, keep it the same here
 		let localDomain = domain;
@@ -325,7 +325,7 @@ function createPage() {
 
 							overwriteWarning(thisBookmark1[i]);
 
-							dropdownDomain = checkLevels(storage, getWebpage(thisBookmark1[i].url, thisBookmark1[i].title, storage)); //checkLevels(thisBookmark1[i].url);
+							dropdownDomain = checkLevels(storage, normalizeContentUrl(thisBookmark1[i].url, thisBookmark1[i].title, storage)); //checkLevels(thisBookmark1[i].url);
 
 							//console.log(dropdownDomain);
 
@@ -367,7 +367,7 @@ function createPage() {
 				} else {
 					check = false;
 					for (let i = 0; i < thisBookmark2.length; i++) {
-						if (thisBookmark2[i] && domain == checkLevels(thisBookmark2, getWebpage(thisBookmark2[i].url, thisBookmark2[i].title, storage))) {
+						if (thisBookmark2[i] && domain == checkLevels(thisBookmark2, normalizeContentUrl(thisBookmark2[i].url, thisBookmark2[i].title, storage))) {
 							check = i;
 						}
 					}
@@ -578,7 +578,7 @@ if (document.getElementById("current-page")) {
 		//Need to get storage here, for getting the webpage
 		chrome.storage.sync.get(function (storage) {
 			url = tabs[0].url;
-			domain = getWebpage(url, tabs[0].title, storage);
+			domain = normalizeContentUrl(url, tabs[0].title, storage);
 			title = tabs[0].title;
 			favIconUrl = tabs[0].favIconUrl;
 
