@@ -69,7 +69,7 @@ function normalizeContentUrl(url, title, storage) {
 	let indicativeCheck = /.+\/(?=season-|ep-|episode-|page-|p-)/.exec(output);
 	if (indicativeCheck) output = indicativeCheck[0];
 
-	/////////ODD-URL WEBSITES COMPATABILITY/////////
+	/////////ODD-URL WEBSITES COMPATIBILITY/////////
 	let oddUrlCheck = null;
 
 	//WEBTOONS// webtoons.com/language/genre/name/
@@ -83,7 +83,7 @@ function normalizeContentUrl(url, title, storage) {
 
 	if (oddUrlCheck) output = oddUrlCheck[0];
 
-	/////////SPECIAL WEBSITE COMPATABILITY/////////
+	/////////SPECIAL WEBSITE COMPATIBILITY/////////
 	let special = null;
 
 	//TAPAS// tapas.io/episode/ (same for every comic; we have to test by title)
@@ -473,7 +473,7 @@ function createPage() {
 
 //Warning when overwriting lower-level ABUkmarks
 function overwriteWarning(bookmark) {
-	if (bookmark.title.indexOf(" (ABU)") !== -1 && warning.indexOf("overwrit") == -1) {
+	if (bookmark.title.indexOf(" (ABU)") !== -1 && warning.indexOf("overwrite") == -1) {
 		warningClass = "overwrite";
 		warning += "<strong>Don't accidentally overwrite ABUkmarks deeper in the website!</strong> If you do it, do it on purpose. Any bookmarks ending in (ABU) are ABUkmarks.<br>";
 	}
