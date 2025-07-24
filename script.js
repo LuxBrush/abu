@@ -206,6 +206,14 @@ chrome.tabs.onActivated.addListener(function (activatedTab) {
 	});
 });
 
+/**
+ * Updates tab-specific information and handles YouTube video progress tracking.
+ * This function is called when a tab is updated or activated. It handles special
+ * cases like YouTube video progress tracking and updates the browser action icon
+ * based on whether the current URL has an associated ABUkmark.
+ * 
+ * @param {chrome.tabs.Tab} thisTab - The tab object containing information about the active tab
+ */
 function updateTabInfo(thisTab) {
 	///Tab-specific code
 	//YOUTUBE// add time of video
