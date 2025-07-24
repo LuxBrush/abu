@@ -116,7 +116,7 @@ function getWebpage(url, title, storage) {
 	//If a special, unusual value was passed:
 	if (special) {
 		//See if either the special exists, or a higher level does not exist; in either case, we'll use the special value
-		if (storage.websites[special] || !storage.websites[checkLevels(storage, output)]) {
+		if (storage[special] || !storage[checkLevels(storage, output)]) {
 			output = special;
 		}
 	}

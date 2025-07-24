@@ -13,5 +13,5 @@ type ABUStorage = {
  */
 type StorageObject = {
 	ABUVersion?: number;
-	websites: ABUStorage;
+	ABUStorage;
 };
