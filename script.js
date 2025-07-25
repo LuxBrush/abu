@@ -13,9 +13,6 @@ let favIconUrl = "";
 //Warn about home page ABUkmarks going everywhere if they're on the home page
 let warning = "";
 
-// Buttons
-const mainButton = Get.elementByID("current-page");
-
 console.log("May get an error: Unchecked runtime.lastError: The tab was closed. The code should keep running, but there's no way to check for if a tab exists; only to hide the error. I opted for just letting it be. :P");
 
 /**
@@ -302,6 +299,7 @@ function createPage() {
 			chrome.storage.sync.set({ "ABUVersion": ABUVersion });
 		}
 
+		const mainButton = Get.elementByID("current-page");
 		mainButton.dataset.multiple = "0";
 		//console.log(domain,domain.substr(0,domain.length-2).indexOf("/")==-1);
 
@@ -482,6 +480,7 @@ function overwriteWarning(bookmark) {
 }
 
 function ABU(input, mustMakeNew) {
+	const mainButton = Get.elementByID("current-page");
 	inArray = 0;
 	inArrayDomain = "";
 
@@ -588,7 +587,7 @@ if (document.getElementById("current-page")) {
 	console.log("ABU popup loaded!");
 
 	//Have notifications depending on what's done
-
+	const mainButton = Get.elementByID("current-page");
 	mainButton.dataset.multiple = "0";
 
 	//Get URL
