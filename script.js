@@ -542,7 +542,7 @@ function ABU(input, mustMakeNew) {
  */
 function createABUkmark(urlIdentifier, parentId) {
 	const ABUid = Date.now();
-	chrome.bookmarks.create({ parentId, title: `${title} (ABU)`, url: createABURL(urlIdentifier, ABUid) }, function () {
+	chrome.bookmarks.create({ parentId, title: `${title} (ABU)`, url: createABURL(url, ABUid) }, function () {
 		storeObj(urlIdentifier, ABUid);
 	});
 }
