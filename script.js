@@ -532,11 +532,18 @@ function ABU(input, mustMakeNew) {
 	chrome.browserAction.setIcon({ path: activeIcons });
 }
 
-//Create a new bookmark to be an ABUkmark
-function createABUkmark(input, parentId) {
+/**
+ * Creates a new ABUkmark (Automatic Bookmark Updater bookmark) in the browser's bookmarks.
+ * The bookmark will have "(ABU)" appended to its title and a unique ID added to the URL.
+ *
+ * @param {string} urlIdentifier - The URL or identifier to be used for creating the ABUkmark.
+ * @param {string} parentId - The ID of the parent folder where the new bookmark will be created.
+ * @returns {void}
+ */
+function createABUkmark(urlIdentifier, parentId) {
 	const ABUid = Date.now();
-	chrome.bookmarks.create({ parentId, title: `${title} (ABU)`, url: createABURL(url, ABUid) }, function () {
-		storeObj(input, ABUid);
+	chrome.bookmarks.create({ parentId, title: `${title} (ABU)`, url: createABURL(urlIdentifier, ABUid) }, function () {
+		storeObj(urlIdentifier, ABUid);
 	});
 }
 
