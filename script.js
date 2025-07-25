@@ -46,7 +46,7 @@ function checkLevels(storage, url) {
 
 	// Attempt to find existing paths by progressively removing segments from the end
 	// Limited to 10 iterations to prevent infinite loops on very long paths
-	for (let i = 0; i < 10; i++) {
+	for (let i = 0; i < testUrl.length; i++) {
 		// If the current test path exists in our object, use it as output and stop searching
 		if (storage[testUrl]) {
 			outputUrl = testUrl;
@@ -64,30 +64,35 @@ function checkLevels(storage, url) {
 }
 
 //Any changes to the URL call this- even a querystring change
-chrome.tabs.onUpdated.addListener(function (tabId, changeInfo, updatedTab) {
-	//Check for ABUids on loading (we don't want to wait until it finishes loading to check, in some cases that could take a while or the ABUid could break PHP or other web code)
-	if (changeInfo.status == "loading") {
-		//console.log(updatedTab.url);
+chrome.tabs.onUpdated.addListener(async function (tabId, changeInfo, updatedTab) {
+	// Check for ABUids on loading
+	if (changeInfo.status === "loading") {
+		if (!updatedTab.url || !updatedTab.id) {
+			throw new Error("Failed to process tab update: tab URL or ID is missing or undefined");
+		}
 
-		//Save the URL without an ABUid
-		let newURL = updatedTab.url.replace(/(\?|\&)ABUid.*/, "");
+		// Save the URL without an ABUid
+		const newURL = updatedTab.url.replace(/(?:\?|&)ABUid[^&]*(?:&|$)/, (match, p1) => (match.includes("?") ? "?" : match.includes("&") ? "&" : "")).replace(/[?&]$/, "");
 
-		//If the URL had an ABUid, remove it
+		// If the URL had an ABUid, remove it
 		if (newURL !== updatedTab.url) {
-			//console.log("Replace state and stuff");
-
-			//Loads the page without the ABUid
-			chrome.tabs.executeScript(updatedTab.id, { code: "location.replace('" + newURL + "');", runAt: "document_start" });
-
-			//history.replaceState({},'',newURL);
-			//location.reload();
-			//chrome.tabs.update(tabId,{url:newURL});
+			try {
+				await chrome.scripting.executeScript({
+					target: { tabId: updatedTab.id },
+					func: (/** @type {string} */ url) => {
+						window.location.replace(url);
+					},
+					args: [newURL],
+					injectImmediately: true,
+				});
+			} catch (error) {
+				console.error("Failed to execute script:", error);
+			}
 		}
 	}
 
-	//Save the data if we're not switching from an ABUid tab (must be complete to get the title)
-	if (changeInfo.status == "complete" || changeInfo.title) {
-		//YouTube seems to have an AJAX setup now; when the title's been adjusted, we should be good to go! (status doesn't go to complete, which implies AJAX setup)
+	// Save the data if we're not switching from an ABUid tab
+	if (changeInfo.status === "complete" || changeInfo.title) {
 		updateTabInfo(updatedTab);
 	}
 });
@@ -109,27 +114,39 @@ function updateTabInfo(thisTab) {
 		//We cannot run functions, like document.getElementById("movie_player").getCurrentTime(), but we can read values. So we have to use a roundabout method to get what we want; the best seems to be getting the aria-valuenow from ytp-progress-bar
 
 		// As a video progresses, automatically adds
-		chrome.tabs.executeScript(thisTab.id, {
-			allFrames: true,
-			code: `
-			if(!ABUYT){
-				let ABUYT = setInterval(function(){
-					// console.log('RUNNING INTERVAL');
-					let progressBar = document.getElementsByClassName("ytp-progress-bar");
-					
-					if(!progressBar.length) return;
-					
-					// If a miniplayer is opened, we need to make sure we get the last element- that will be the main player.
-					let newURL = window.location.href.replace(/&t=[^&]+|$/,"&t="+progressBar[progressBar.length-1].getAttribute("aria-valuenow"));
-					
-					// Don't update the history if it's the same- this wastes resources
-					if(newURL === window.location.href) return;
-					
-					history.replaceState(null,'',newURL);
-				},1000);
-			}
-		`,
-		});
+		try {
+			chrome.scripting.executeScript({
+				target: { tabId: thisTab.id, allFrames: true },
+				func: () => {
+					// Use a unique property name to avoid conflicts
+					if (!window.ABU_YT_Interval) {
+						window.ABU_YT_Interval = setInterval(() => {
+							const progressBars = document.getElementsByClassName("ytp-progress-bar");
+							if (!progressBars.length) return;
+
+							// Get the main player's progress bar (last one in case of miniplayer)
+							const progressBar = progressBars[progressBars.length - 1];
+							const currentTime = progressBar.getAttribute("aria-valuenow");
+
+							// Skip if no valid time value
+							if (!currentTime) return;
+
+							// Update URL with current timestamp
+							const newURL = new URL(window.location.href);
+							newURL.searchParams.set("t", currentTime);
+
+							// Only update if URL actually changed
+							if (newURL.toString() !== window.location.href) {
+								history.replaceState(null, "", newURL);
+							}
+						}, 1000);
+					}
+				},
+				world: "MAIN", // Run in main world to access page's window object
+			});
+		} catch (error) {
+			console.error("Failed to inject YouTube progress tracker:", error);
+		}
 	}
 
 	chrome.storage.sync.get(function (/** @type {ABUStorage} */ storage) {
@@ -145,11 +162,15 @@ function updateTabInfo(thisTab) {
 			},
 		};
 		comms.postMessage(message);
-		comms.onMessage.addListener((/** @type {string} */ returnMessage) => {
-			if (returnMessage && returnMessage !== "") {
+		const messageListener = (/** @type {string} */ returnMessage) => {
+			if (returnMessage && typeof returnMessage === "string" && returnMessage !== "") {
 				domain = checkLevels(storage, returnMessage);
 			}
-		});
+
+			comms.onMessage.removeListener(messageListener);
+		};
+
+		comms.onMessage.addListener(messageListener);
 
 		// In case this gets changed elsewhere, keep it the same here
 		let localDomain = domain;
@@ -222,25 +243,26 @@ function createPage() {
 		//Setup buttons
 		if (!storage[domain]) {
 			//If we don't have an ABUkmark for this site
-			chrome.bookmarks.search(domain, function (thisBookmark1) {
-				if (thisBookmark1[0]) {
+			chrome.bookmarks.search(domain, function (bookmarkResults) {
+				const bookmark = bookmarkResults[0];
+				if (bookmark) {
 					//If the bookmark exists
 					mainButton.innerHTML = "Convert to ABUkmark";
 					mainButton.style.backgroundColor = "#9ccc5e";
 
-					overwriteWarning(thisBookmark1[0]);
+					overwriteWarning(bookmarkResults[0]);
 
-					setNotification(warning + "Will convert <em title='" + thisBookmark1[0].url + "'>" + thisBookmark1[0].title + "</em>. <span id='onlyNewABU'>Or, make a new ABUkmark.</span>");
-					if (thisBookmark1.length > 1) {
+					setNotification(warning + "Will convert <em title='" + bookmarkResults[0].url + "'>" + bookmarkResults[0].title + "</em>. <span id='onlyNewABU'>Or, make a new ABUkmark.</span>");
+					if (bookmarkResults.length > 1) {
 						let bookmarksChoose = "";
 
 						let warningClass = "";
 
 						//Create a dropdown so you can choose which to change
-						for (let i = 0; i < thisBookmark1.length; i++) {
+						for (let i = 0; i < bookmarkResults.length; i++) {
 							warningClass = "";
 							let url = "";
-							const bookmark = thisBookmark1[i];
+							const bookmark = bookmarkResults[i];
 							if (!bookmark.url) {
 								throw new Error("Bookmark does not contain an URL.");
 							}
@@ -256,12 +278,16 @@ function createPage() {
 									storage,
 								},
 							};
+							comms.onMessage.addListener(messageListener);
 							comms.postMessage(message);
-							comms.onMessage.addListener((/** @type {string} */ returnMessage) => {
-								if (returnMessage && returnMessage !== "") {
+							function messageListener(/** @type {string} */ returnMessage) {
+								if (returnMessage && typeof returnMessage === "string" && returnMessage !== "") {
 									url = returnMessage;
 								}
-							});
+
+								comms.onMessage.removeListener(messageListener);
+							}
+
 							const dropdownDomain = checkLevels(storage, url);
 
 							//console.log(dropdownDomain);
@@ -279,7 +305,7 @@ function createPage() {
 								bookmarksChoose += "<option class='overwrite' title='" + bookmark.url + "' data-domain='" + dropdownDomain + "' value='" + bookmark.id + "'>" + bookmark.title + "</option>";
 							}
 						}
-						setNotification(warning + thisBookmark1.length + " bookmarks spotted. Will convert <select>" + bookmarksChoose + "</select>. <span id='onlyNewABU'>Or, make a new ABUkmark.</span>");
+						setNotification(warning + bookmarkResults.length + " bookmarks spotted. Will convert <select>" + bookmarksChoose + "</select>. <span id='onlyNewABU'>Or, make a new ABUkmark.</span>");
 						mainButton.dataset.multiple = "1";
 					}
 				} else {
@@ -297,19 +323,28 @@ function createPage() {
 				};
 			});
 		} else {
+			const bookmarkData = storage[domain];
+			if (!bookmarkData) {
+				throw new Error("Could not retrieve bookmark data for the current domain");
+			}
 			//If we have an ABUkmark for this, according to our data
-			chrome.bookmarks.search("ABUid=" + storage[domain]["ABUid"], function (existingABUBookmarks) {
-				if (!existingABUBookmarks) {
-					chrome.storage.sync.remove(domain);
+			chrome.bookmarks.search(`ABUid=${bookmarkData.ABUid}`, async function (existingABUBookmarks) {
+				if (existingABUBookmarks.length === 0) {
+					await chrome.storage.sync.remove(domain);
 				} else {
-					let matchingBookmarkIndex = 0;
+					let hasMatchingBookmark = false;
 
-					for (let bookmarkIndex = 0; bookmarkIndex < existingABUBookmarks.length; bookmarkIndex++) {
-						let domainLevel = "";
+					/** @type {WebPageIdCommData[]} */
+					const messageList = [];
 
-						const currentBookmark = existingABUBookmarks[bookmarkIndex];
-						if (!currentBookmark.url) {
-							console.error("Bookmark", currentBookmark);
+					for (const bookmark of existingABUBookmarks) {
+						if (!bookmark) {
+							console.error("Bookmark not found.");
+							continue;
+						}
+
+						if (!bookmark.url) {
+							console.error("Bookmark", bookmark);
 							throw new Error("Bookmark contain a URL.");
 						}
 
@@ -317,43 +352,57 @@ function createPage() {
 						const webPageIdMessage = {
 							functionName: "getWebPageId",
 							properties: {
-								url: currentBookmark.url,
-								title: currentBookmark.title,
+								url: bookmark.url,
+								title: bookmark.title,
 								storage,
 							},
 						};
-						comms.postMessage(webPageIdMessage);
-						comms.onMessage.addListener(
-							/** @type {string} */ (webPageIdResponse) => {
-								console.log(webPageIdResponse);
-								if (webPageIdResponse && webPageIdResponse !== "") {
-									domainLevel = checkLevels(existingABUBookmarks, webPageIdResponse);
-								}
-							}
-						);
 
-						if (existingABUBookmarks[bookmarkIndex] && domain === domainLevel) {
-							matchingBookmarkIndex = bookmarkIndex;
-						}
+						messageList.push(webPageIdMessage);
 					}
 
-					//GO THROUGH THE FOR LOOP (otherwise won't work with multiple pages and if in a higher-level domain; need to check for that)
+					if (messageList.length === 0) {
+						console.log("No bookmarks found.");
+						return;
+					}
 
-					if (existingABUBookmarks[0] && !isNaN(matchingBookmarkIndex)) {
-						//If we've found out the bookmark claimed to exist does, set the button so that:
-						mainButton.innerHTML = "Revert to normal bookmark";
-						mainButton.style.backgroundColor = "#f00";
-						mainButton.onclick = function () {
-							unABU(domain, storage[domain]["ABUid"]);
-							chrome.action.setIcon({ path: inactiveIcons });
-						};
-					} else {
-						chrome.storage.sync.remove(domain);
-						mainButton.innerHTML = "Create ABUkmark";
-						mainButton.style.backgroundColor = "#619919";
-						mainButton.onclick = function () {
-							ABU(domain, false);
-						};
+					for (const message of messageList) {
+						comms.onMessage.addListener(messageListener);
+						comms.postMessage(message);
+						function messageListener(/** @type {string} */ webPageIdResponse) {
+							const bookmarkData = storage[domain];
+							if (!bookmarkData) {
+								throw new Error("Could not retrieve bookmark data for the current domain");
+							}
+
+							let domainLevel = "";
+
+							if (webPageIdResponse && typeof webPageIdResponse === "string" && webPageIdResponse !== "") {
+								domainLevel = checkLevels({ domain: { ABUid: "", favIconUrl: "" } }, webPageIdResponse);
+							}
+
+							if (domain === domainLevel) {
+								hasMatchingBookmark = true;
+							}
+
+							if (existingABUBookmarks[0] && hasMatchingBookmark) {
+								mainButton.innerHTML = "Revert to normal bookmark";
+								mainButton.style.backgroundColor = "#f00";
+								mainButton.onclick = function () {
+									unABU(domain, bookmarkData.ABUid);
+									chrome.action.setIcon({ path: inactiveIcons });
+								};
+							} else {
+								chrome.storage.sync.remove(domain);
+								mainButton.innerHTML = "Create ABUkmark";
+								mainButton.style.backgroundColor = "#619919";
+								mainButton.onclick = function () {
+									ABU(domain, false);
+								};
+							}
+
+							comms.onMessage.removeListener(messageListener);
+						}
 					}
 				}
 			});
@@ -436,8 +485,8 @@ function overwriteWarning(bookmark) {
 }
 
 function ABU(input, mustMakeNew) {
-	inArray = 0;
-	inArrayDomain = "";
+	let inArray = 0;
+	let inArrayDomain = "";
 
 	if (mainButton.dataset.multiple === "1") {
 		inArray = document.getElementsByTagName("SELECT")[0].selectedIndex;
@@ -485,11 +534,14 @@ function ABU(input, mustMakeNew) {
 				},
 			};
 			comms.postMessage(message);
-			comms.onMessage.addListener((/** @type {boolean} */ returnMessage) => {
+			const messageListener = (/** @type {boolean} */ returnMessage) => {
 				if (returnMessage) {
 					createPage();
 				}
-			});
+
+				comms.onMessage.removeListener(messageListener);
+			};
+			comms.onMessage.addListener(messageListener);
 
 			chrome.bookmarks.update(thisBookmark[inArray].id, { title: title + " (ABU)", url: createABURL(url, ABUid) });
 
@@ -514,11 +566,14 @@ function createABUkmark(input, parentId) {
 			},
 		};
 		comms.postMessage(message);
-		comms.onMessage.addListener((/** @type {boolean} */ returnMessage) => {
+		const messageListener = (/** @type {boolean} */ returnMessage) => {
 			if (returnMessage) {
 				createPage();
 			}
-		});
+
+			comms.onMessage.removeListener(messageListener);
+		};
+		comms.onMessage.addListener(messageListener);
 	});
 }
 
@@ -579,12 +634,15 @@ if (document.getElementById("current-page")) {
 				},
 			};
 			comms.postMessage(message);
-			comms.onMessage.addListener((/** @type {string} */ returnMessage) => {
+			const messageListener = (/** @type {string} */ returnMessage) => {
 				console.log("Return message current page:", returnMessage);
 				if (returnMessage && returnMessage !== "") {
 					domain = returnMessage;
 				}
-			});
+
+				comms.onMessage.removeListener(messageListener);
+			};
+			comms.onMessage.addListener(messageListener);
 			title = tabs[0].title;
 			favIconUrl = tabs[0].favIconUrl;
 

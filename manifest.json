@@ -21,7 +21,7 @@
 		"default_popup": "popup.html",
 		"default_title": "ABU (Automatic Bookmark Updater)"
 	},
-	"permissions": ["tabs", "storage", "bookmarks"],
+	"permissions": ["tabs", "storage", "bookmarks", "scripting"],
 	"host_permissions": ["<all_urls>"],
 	"browser_specific_settings": {
 		"gecko": {
