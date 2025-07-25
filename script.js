@@ -547,10 +547,17 @@ function createABUkmark(urlIdentifier, parentId) {
 	});
 }
 
-//Make an ABURL
-function createABURL(inputURL, inputABUid) {
+/**
+ * Creates a URL with an ABU (Automatic Bookmark Updater) identifier appended as a query parameter.
+ * The function automatically handles the appropriate URL parameter separator (? or &) based on the input URL.
+ *
+ * @param {string} url - The base URL to which the ABU identifier will be appended
+ * @param {string|number} ABUid - The unique identifier to be added to the URL
+ * @returns {string} The modified URL with the ABU identifier as a query parameter
+ */
+function createABURL(url, ABUid) {
 	//ABURL is the URL that ABU creates that specifies the bookmark is ABU; it just appends a querystring with the id
-	return inputURL + (inputURL.indexOf("?") > -1 ? "&" : "?") + "ABUid=" + inputABUid;
+	return url + (url.indexOf("?") > -1 ? "&" : "?") + "ABUid=" + ABUid;
 }
 
 function setNotification(input) {
