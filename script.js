@@ -481,15 +481,16 @@ function overwriteWarning(bookmark) {
 
 function ABU(input, mustMakeNew) {
 	const mainButton = Get.elementByID("current-page");
-	inArray = 0;
-	inArrayDomain = "";
+	let inArray = 0;
+	let inArrayDomain = "";
 
 	if (mainButton.dataset.multiple === "1") {
-		inArray = document.getElementsByTagName("SELECT")[0].selectedIndex;
+		const selectElement = /** @type {HTMLSelectElement} */ (document.getElementsByTagName("SELECT")[0]);
+		inArray = selectElement.selectedIndex;
 
 		//Get the bookmark to change with this:
-		if (document.getElementsByTagName("SELECT")[0].options[document.getElementsByTagName("SELECT")[0].selectedIndex].className !== "") {
-			inArrayDomain = document.getElementsByTagName("SELECT")[0].options[document.getElementsByTagName("SELECT")[0].selectedIndex].dataset.domain;
+		if (selectElement.options[selectElement.selectedIndex].className !== "") {
+			inArrayDomain = selectElement.options[selectElement.selectedIndex].dataset.domain;
 		}
 	}
 
