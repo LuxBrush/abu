@@ -318,7 +318,7 @@ function createPage() {
 				warning += "ABUkmark a subpage if possible so visiting about, archives, links, etc doesn't update bookmarks. Just click on an article, a back button, or a button to start reading and it should be perfect!<br>";
 		}
 
-		anywhereButtons = "";
+		let anywhereButtons = "";
 
 		domain = resolveUrlPath(storage, domain);
 
