@@ -560,16 +560,26 @@ function createABURL(url, ABUid) {
 	return url + (url.indexOf("?") > -1 ? "&" : "?") + "ABUid=" + ABUid;
 }
 
-function setNotification(input) {
-	document.getElementById("notification").innerHTML = input;
+/**
+ * Updates the notification element's content and visibility, and sets up the click handler
+ * for creating a new ABUkmark when the notification is shown.
+ *
+ * @param {string} html - The HTML content to display in the notification.
+ *                         If an empty string, the notification will be hidden.
+ * @returns {void}
+ */
+function setNotification(html) {
+	const notification = Get.elementByID("notification");
+	const onlyNewABU = document.getElementById("onlyNewABU");
+	notification.innerHTML = html;
 
-	if (document.getElementById("onlyNewABU")) {
-		document.getElementById("onlyNewABU").onclick = function () {
-			ABU(domain, true, false);
+	if (onlyNewABU) {
+		onlyNewABU.onclick = () => {
+			ABU(domain, true);
 		};
 	}
 
-	document.getElementById("notification").style.display = input !== "" ? "block" : "none";
+	notification.style.display = html !== "" ? "block" : "none";
 }
 
 //Stores an object in the user's synced data
