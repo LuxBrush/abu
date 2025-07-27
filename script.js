@@ -383,16 +383,16 @@ function createPage() {
 				if (!thisBookmark2) {
 					chrome.storage.sync.remove(domain);
 				} else {
-					check = false;
+					let check = false;
 					for (let i = 0; i < thisBookmark2.length; i++) {
 						if (thisBookmark2[i] && domain == resolveUrlPath(thisBookmark2, normalizeContentUrl(thisBookmark2[i].url, thisBookmark2[i].title, storage))) {
-							check = i;
+							check = true;
 						}
 					}
 
 					//GO THROUGH THE FOR LOOP (otherwise won't work with multiple pages and if in a higher-level domain; need to check for that)
 
-					if (thisBookmark2[0] && !isNaN(check)) {
+					if (thisBookmark2[0] && check) {
 						//If we've found out the bookmark claimed to exist does, set the button so that:
 						mainButton.innerHTML = "Revert to normal bookmark";
 						mainButton.style.backgroundColor = "#f00";
