@@ -333,9 +333,9 @@ function createPage() {
 
 					setNotification(warning + "Will convert <em title='" + thisBookmark1[0].url + "'>" + thisBookmark1[0].title + "</em>. <span id='onlyNewABU'>Or, make a new ABUkmark.</span>");
 					if (thisBookmark1.length > 1) {
-						bookmarksChoose = "";
+						let bookmarksChoose = "";
 
-						warningClass = "";
+						let warningClass = "";
 
 						//Create a dropdown so you can choose which to change
 						for (let i = 0; i < thisBookmark1.length; i++) {
@@ -343,14 +343,14 @@ function createPage() {
 
 							overwriteWarning(thisBookmark1[i]);
 
-							dropdownDomain = resolveUrlPath(storage, normalizeContentUrl(thisBookmark1[i].url, thisBookmark1[i].title, storage)); //checkLevels(thisBookmark1[i].url);
+							const dropdownDomain = resolveUrlPath(storage, normalizeContentUrl(thisBookmark1[i].url, thisBookmark1[i].title, storage)); //checkLevels(thisBookmark1[i].url);
 
 							//console.log(dropdownDomain);
 
 							//Add a dropdown with the bookmarks info
 							if (thisBookmark1[i].title.indexOf(" (ABU)") == -1) {
 								//If the bookmark is untitled, let the user know
-								thisBookmarkTitle = thisBookmark1[i].title;
+								let thisBookmarkTitle = thisBookmark1[i].title;
 								if (thisBookmarkTitle == "") {
 									thisBookmarkTitle = "(Untitled)";
 								}
