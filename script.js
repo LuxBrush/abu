@@ -374,7 +374,7 @@ function createPage() {
 					}
 				}
 				mainButton.onclick = function () {
-					ABU(domain, false, true);
+					ABU(domain, false);
 				};
 			});
 		} else {
