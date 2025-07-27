@@ -405,7 +405,7 @@ function createPage() {
 						mainButton.innerHTML = "Create ABUkmark";
 						mainButton.style.backgroundColor = "#619919";
 						mainButton.onclick = function () {
-							ABU(domain, false, false);
+							ABU(domain, false);
 						};
 					}
 				}
