@@ -9,6 +9,7 @@ let url = "";
 let domain = "";
 let title = "";
 let favIconUrl = "";
+let warningClass = "";
 
 //Warn about home page ABUkmarks going everywhere if they're on the home page
 let warning = "";
@@ -335,7 +336,7 @@ function createPage() {
 					if (thisBookmark1.length > 1) {
 						let bookmarksChoose = "";
 
-						let warningClass = "";
+						warningClass = "";
 
 						//Create a dropdown so you can choose which to change
 						for (let i = 0; i < thisBookmark1.length; i++) {
@@ -565,7 +566,7 @@ function setNotification(input) {
 
 	if (document.getElementById("onlyNewABU")) {
 		document.getElementById("onlyNewABU").onclick = function () {
-			ABU(domain, true, false);
+			ABU(domain, true);
 		};
 	}
 
