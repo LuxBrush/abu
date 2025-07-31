@@ -44,68 +44,68 @@ console.log("May get an error: Unchecked runtime.lastError: The tab was closed. 
  * // Returns: 'tapas.io/'
  */
 function normalizeContentUrl(url, title, storage) {
-    // Validate input
-    if (typeof url !== 'string' || !url) {
-        throw new Error('Invalid URL provided');
-    }
+	// Validate input
+	if (typeof url !== "string" || !url) {
+		throw new Error("Invalid URL provided");
+	}
 
-    // Parse the URL to get its components
-    let parsedUrl;
-    try {
-        // Ensure URL has a protocol for proper parsing
-        const urlWithProtocol = url.startsWith('http') ? url : `https://${url}`;
-        parsedUrl = new URL(urlWithProtocol);
-    } catch (e) {
-        console.warn('Failed to parse URL:', url);
-        return url; // Return original if we can't parse it
-    }
+	// Parse the URL to get its components
+	let parsedUrl;
+	try {
+		// Ensure URL has a protocol for proper parsing
+		const urlWithProtocol = url.startsWith("http") ? url : `https://${url}`;
+		parsedUrl = new URL(urlWithProtocol);
+	} catch (e) {
+		console.warn("Failed to parse URL:", url);
+		return url; // Return original if we can't parse it
+	}
 
-    // Extract domain and path
-    const domain = parsedUrl.hostname.replace('www.', '');
-    const path = parsedUrl.pathname;
+	// Extract domain and path
+	const domain = parsedUrl.hostname.replace("www.", "");
+	const path = parsedUrl.pathname;
 
-    // Initialize output with domain
-    let output = domain + '/';
+	// Initialize output with domain
+	let output = domain + "/";
 
-    // Handle different types of URLs based on their structure
-    if (path) {
-        // Check for special key folders (e.g., /blog/, /comic/)
-        const keywordMatch = path.match(/\/(?:blog|comic)\/[^/]*/i);
-        if (keywordMatch) {
-            output += keywordMatch[0].substring(1) + '/';
-        } 
-        // Check for indicative path segments (e.g., season-, ep-, etc.)
-        else {
-            const indicativeMatch = path.match(/^(\/[^/]*)*?\/(?=[^/]*(?:season-|ep-|episode-|page-|p-|chapter-))/i);
-            if (indicativeMatch && indicativeMatch[0]) {
-                output += indicativeMatch[0].substring(1);
-            } else {
-                // Default to first two path segments if no special patterns found
-                const pathSegments = path.split('/').filter(Boolean);
-                if (pathSegments.length > 0) {
-                    output += pathSegments.slice(0, 2).join('/') + '/';
-                }
-            }
-        }
-    }
+	// Handle different types of URLs based on their structure
+	if (path) {
+		// Check for special key folders (e.g., /blog/, /comic/)
+		const keywordMatch = path.match(/\/(?:blog|comic)\/[^/]*/i);
+		if (keywordMatch) {
+			output += keywordMatch[0].substring(1) + "/";
+		}
+		// Check for indicative path segments (e.g., season-, ep-, etc.)
+		else {
+			const indicativeMatch = path.match(/^(\/[^/]*)*?\/(?=[^/]*(?:season-|ep-|episode-|page-|p-|chapter-))/i);
+			if (indicativeMatch && indicativeMatch[0]) {
+				output += indicativeMatch[0].substring(1);
+			} else {
+				// Default to first two path segments if no special patterns found
+				const pathSegments = path.split("/").filter(Boolean);
+				if (pathSegments.length > 0) {
+					output += pathSegments.slice(0, 2).join("/") + "/";
+				}
+			}
+		}
+	}
 
-    // Handle odd URL patterns for specific websites
-    const oddUrlPatterns = [
-        // Webtoons format: webtoons.com/language/genre/name/
-        /webtoons\.com\/(?:[^/]+\/){2}[^/]+/i,
-        // Lezhin format: lezhin.com/language/comic/title
-        /lezhin\.com\/[^/]+\/comic\/[^/]+/i,
-        // MangaHub format: mangahub.io/chapter/title
-        /mangahub\.io\/chapter\/[^/]+/i
-    ];
+	// Handle odd URL patterns for specific websites
+	const oddUrlPatterns = [
+		// Webtoons format: webtoons.com/language/genre/name/
+		/webtoons\.com\/(?:[^/]+\/){2}[^/]+/i,
+		// Lezhin format: lezhin.com/language/comic/title
+		/lezhin\.com\/[^/]+\/comic\/[^/]+/i,
+		// MangaHub format: mangahub.io/chapter/title
+		/mangahub\.io\/chapter\/[^/]+/i,
+	];
 
-    for (const pattern of oddUrlPatterns) {
-        const match = url.match(pattern);
-        if (match) {
-            output = match[0] + '/';
-            break;
-        }
-    }
+	for (const pattern of oddUrlPatterns) {
+		const match = url.match(pattern);
+		if (match) {
+			output = match[0];
+			break;
+		}
+	}
 
 	/////////SPECIAL WEBSITE COMPATIBILITY/////////
 	let special = "";
