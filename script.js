@@ -349,9 +349,9 @@ function updateTabInfo(thisTab) {
 }
 
 function createPage() {
-	chrome.storage.sync.get(function (storage) {
+	chrome.storage.sync.get(function (/** @type {StorageObject} */ storage) {
 		//ABUVersion info
-		if (!storage["ABUVersion"] || storage["ABUVersion"] < ABUVersion) {
+		if (!storage.ABUVersion || storage.ABUVersion < ABUVersion) {
 			document.getElementsByTagName("BODY")[0].insertAdjacentHTML("afterbegin", "<p id='update'>ABU 1.4 adds support for mangahub.io. Always feel free to let me know if ABU doesn't work on any website!</p>");
 			chrome.storage.sync.set({ "ABUVersion": ABUVersion });
 		}
@@ -365,7 +365,7 @@ function createPage() {
 		//If we're on the homepage, warn the user that subpages are better
 		if (
 			// If all of these are true, the user's on a homepage
-			(domain.indexOf("/") !== -1 && domain.substr(0, domain.length - 2).indexOf("/") == -1 && !/(page|p|date)=/i.test(url) && !/tapas.io\/(series|episode)\//.test(url)) ||
+			(domain.indexOf("/") !== -1 && domain.substring(0, domain.length - 2).indexOf("/") == -1 && !/(page|p|date)=/i.test(url) && !/tapas.io\/(series|episode)\//.test(url)) ||
 			// If any of these are true, the user's on a homepage
 			/mangahub.io\/manga\//.test(url)
 		) {
@@ -435,8 +435,12 @@ function createPage() {
 				};
 			});
 		} else {
+			const domainData = storage[domain];
+			if (!domainData) {
+				throw new Error("No ABUkmark found for this domain in storage");
+			}
 			//If we have an ABUkmark for this, according to our data
-			chrome.bookmarks.search("ABUid=" + storage[domain]["ABUid"], function (thisBookmark2) {
+			chrome.bookmarks.search("ABUid=" + domainData.ABUid, function (thisBookmark2) {
 				if (!thisBookmark2) {
 					chrome.storage.sync.remove(domain);
 				} else {
