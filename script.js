@@ -264,6 +264,9 @@ chrome.tabs.onActivated.addListener(function (activatedTab) {
  * @param {chrome.tabs.Tab} thisTab - The tab object containing information about the active tab
  */
 function updateTabInfo(thisTab) {
+	if (!thisTab.url) {
+		throw new Error("Tab URL is undefined or null");
+	}
 	///Tab-specific code
 	//YOUTUBE// add time of video
 	if (/youtube.com\/watch/.test(thisTab.url)) {
@@ -293,7 +296,10 @@ function updateTabInfo(thisTab) {
 		});
 	}
 
-	chrome.storage.sync.get(function (storage) {
+	chrome.storage.sync.get(function (/** @type {StorageObject} */ storage) {
+		if (!thisTab.url || !thisTab.title) {
+			throw new Error("Tab URL or title is undefined or null");
+		}
 		//NOT DONE YET: If the page is part of a higher domain that we ARE keeping track of but we don't have a direct domain for this one, let's go up some levels:
 
 		domain = resolveUrlPath(storage, normalizeContentUrl(thisTab.url, thisTab.title, storage));
@@ -305,6 +311,9 @@ function updateTabInfo(thisTab) {
 		if (storage[localDomain]) {
 			//Check that the bookmark hasn't been deleted
 			chrome.bookmarks.search("ABUid=" + storage[localDomain]["ABUid"], async function (targetABUkmark) {
+				if (!thisTab.url) {
+					throw new Error("Tab URL is undefined or null");
+				}
 				//console.log(targetABUkmark);
 
 				//If the bookmark's gone
