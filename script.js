@@ -9,6 +9,7 @@ let url = "";
 let domain = "";
 let title = "";
 let favIconUrl = "";
+let warningClass = "";
 
 //Warn about home page ABUkmarks going everywhere if they're on the home page
 let warning = "";
@@ -43,79 +44,123 @@ console.log("May get an error: Unchecked runtime.lastError: The tab was closed. 
  * // Returns: 'tapas.io/'
  */
 function normalizeContentUrl(url, title, storage) {
-	//Ignore the last section of the URL every time
+    // Validate input
+    if (typeof url !== 'string' || !url) {
+        throw new Error('Invalid URL provided');
+    }
 
-	//console.log(input);
+    // Parse the URL to get its components
+    let parsedUrl;
+    try {
+        // Ensure URL has a protocol for proper parsing
+        const urlWithProtocol = url.startsWith('http') ? url : `https://${url}`;
+        parsedUrl = new URL(urlWithProtocol);
+    } catch (e) {
+        console.warn('Failed to parse URL:', url);
+        return url; // Return original if we can't parse it
+    }
 
-	//Get everything up until 1) a numbered section (past the domain) or 2) a querystring
-	let match = /(\S+\/\/+[^\/]+[^\d\?]+\/)+(?!$)/.exec(url);
-	//console.log(match);
+    // Extract domain and path
+    const domain = parsedUrl.hostname.replace('www.', '');
+    const path = parsedUrl.pathname;
 
-	//Remove http (and www too, if it's present)
-	let output = match && match[0] ? match[0].replace(/[^\/]+\/\/(www.)?/, "") : url.replace(/[^\/]+\/\/(www.)?/, "");
+    // Initialize output with domain
+    let output = domain + '/';
 
-	//console.log(input,output);
+    // Handle different types of URLs based on their structure
+    if (path) {
+        // Check for special key folders (e.g., /blog/, /comic/)
+        const keywordMatch = path.match(/\/(?:blog|comic)\/[^/]*/i);
+        if (keywordMatch) {
+            output += keywordMatch[0].substring(1) + '/';
+        } 
+        // Check for indicative path segments (e.g., season-, ep-, etc.)
+        else {
+            const indicativeMatch = path.match(/^(\/[^/]*)*?\/(?=[^/]*(?:season-|ep-|episode-|page-|p-|chapter-))/i);
+            if (indicativeMatch && indicativeMatch[0]) {
+                output += indicativeMatch[0].substring(1);
+            } else {
+                // Default to first two path segments if no special patterns found
+                const pathSegments = path.split('/').filter(Boolean);
+                if (pathSegments.length > 0) {
+                    output += pathSegments.slice(0, 2).join('/') + '/';
+                }
+            }
+        }
+    }
 
-	//Check for special key folders; go up to those
-	/*
-		/blog/
-		/comic/
-	*/
-	let keywordCheck = /.+\/(blog|comic)\//.exec(output);
-	if (keywordCheck) output = keywordCheck[0];
+    // Handle odd URL patterns for specific websites
+    const oddUrlPatterns = [
+        // Webtoons format: webtoons.com/language/genre/name/
+        /webtoons\.com\/(?:[^/]+\/){2}[^/]+/i,
+        // Lezhin format: lezhin.com/language/comic/title
+        /lezhin\.com\/[^/]+\/comic\/[^/]+/i,
+        // MangaHub format: mangahub.io/chapter/title
+        /mangahub\.io\/chapter\/[^/]+/i
+    ];
 
-	//Check for indicative keywords; go up to those
-	let indicativeCheck = /.+\/(?=season-|ep-|episode-|page-|p-)/.exec(output);
-	if (indicativeCheck) output = indicativeCheck[0];
-
-	/////////ODD-URL WEBSITES COMPATIBILITY/////////
-	let oddUrlCheck = null;
-
-	//WEBTOONS// webtoons.com/language/genre/name/
-	if (!oddUrlCheck) oddUrlCheck = /webtoons.com\/[^/]+\/[^/]+\/[^/]+\//.exec(url);
-
-	//LEZHIM// lezhin.com/language/comic/title
-	if (!oddUrlCheck) oddUrlCheck = /lezhin.com\/[^/]+\/comic\/[^/]+\//.exec(url);
-
-	//MANGAHUB.IO// mangahub.com/chapter/title
-	if (!oddUrlCheck) oddUrlCheck = /mangahub.io\/chapter\/[^/]+\//.exec(url);
-
-	if (oddUrlCheck) output = oddUrlCheck[0];
+    for (const pattern of oddUrlPatterns) {
+        const match = url.match(pattern);
+        if (match) {
+            output = match[0] + '/';
+            break;
+        }
+    }
 
 	/////////SPECIAL WEBSITE COMPATIBILITY/////////
-	let special = null;
+	let special = "";
 
-	//TAPAS// tapas.io/episode/ (same for every comic; we have to test by title)
-	//console.log(input);
-	if (/tapas.io\/(series|episode)\//.test(url) && title) {
-		//Either get the title if separated by :: or by |
-		special = /.+(?=\s::)/.exec(title) || /.+(?=\s\|)/.exec(title);
-		//After get one, get the first item:
-		special = special[0];
+	// TAPAS.IO HANDLING
+	// Handles both series and episode URLs: tapas.io/series/... or tapas.io/episode/...
+	const tapasMatch = url.match(/tapas\.io\/(?:series|episode)\/([^\/?#]+)/i);
+	if (tapasMatch && title) {
+		// Try different title formats in order of preference
+		const titleMatch = title.match(/^([^\n\r|:：\[\]【】]+)/); // Match until first occurrence of |, :, or various brackets
 
-		//The output needs to be tapas.io/ if we're in this situation, otherwise it'll mess up too often (with series/episode switching, other ABUkmarks on the "same level" but different comics)
-		output = "tapas.io/";
+		if (titleMatch) {
+			// Clean up the matched title
+			special = titleMatch[1].trim();
+
+			// For Tapas, we want to use the domain as the output to avoid issues with
+			// series/episode switching and maintain consistency across the same comic
+			output = "tapas.io/";
+		} else {
+			// If we can't extract a clean title, use the URL segment as fallback
+			special = tapasMatch[1].replace(/[-_]+/g, " ").replace(/\b\w/g, (l) => l.toUpperCase());
+			output = "tapas.io/";
+		}
 	}
 
-	//YOUTUBE PLAYLIST// https://www.youtube.com/playlist?list=id
-	if (/youtube.com\/.+list=/.test(url)) {
-		//Get the playlist id
-		special = /(?:\?|&)list=[^?&]*/.exec(url)[0];
-	} else if (/youtube.com\/watch\?v=[^?&]*/.test(url)) {
-		//Get the video id and track time
-		special = /(?:\?|&)v=[^?&]*/.exec(url)[0];
+	// YOUTUBE URLS
+	// Handle various YouTube URL formats including videos, playlists, shorts, and live streams
+	const ytMatch = url.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?|shorts)\/(?!.*?\blist=)|.*[?&]v=)|youtu\.be\/)([\w-]{11})(?:(?:(?=[^?&]*\?)|[?&])(?:list=|t=|start=|end=)([^&]*))?/i);
+
+	if (ytMatch) {
+		const videoId = ytMatch[1];
+		const listId = ytMatch[2];
+
+		if (listId) {
+			// For playlist URLs, use the list parameter
+			special = `?list=${listId}`;
+		} else if (videoId) {
+			// For video URLs, use the video ID
+			special = `?v=${videoId}`;
+		}
 	}
 
-	//GOOGLE SHEETS PRESENTATION// https://docs.google.com/presentation/d/slideshow_id/relevant_stuff
-	if (/docs.google.com\/presentation\/d\/.+\//.test(url)) {
-		//Get the slideshow url
-		special = /docs.google.com\/presentation\/d\/.+\//.exec(url)[0];
+	// GOOGLE SLIDES HANDLING
+	// Handles Google Slides presentation URLs in various formats
+	// Example: https://docs.google.com/presentation/d/presentation_id/edit?usp=sharing
+	const slidesMatch = url.match(/docs\.google\.com\/presentation\/d\/([^\/?#]+)/i);
+	if (slidesMatch) {
+		// Use the presentation ID in the special field
+		special = `docs.google.com/presentation/d/${slidesMatch[1]}/`;
 	}
 
 	//console.log(special);
 
 	//If a special, unusual value was passed:
-	if (special) {
+	if (special !== "") {
 		//See if either the special exists, or a higher level does not exist; in either case, we'll use the special value
 		if (storage[special] || !storage[resolveUrlPath(storage, output)]) {
 			output = special;
@@ -333,7 +378,7 @@ function createPage() {
 
 					setNotification(warning + "Will convert <em title='" + thisBookmark1[0].url + "'>" + thisBookmark1[0].title + "</em>. <span id='onlyNewABU'>Or, make a new ABUkmark.</span>");
 					if (thisBookmark1.length > 1) {
-						bookmarksChoose = "";
+						let bookmarksChoose = "";
 
 						warningClass = "";
 
@@ -343,14 +388,14 @@ function createPage() {
 
 							overwriteWarning(thisBookmark1[i]);
 
-							dropdownDomain = resolveUrlPath(storage, normalizeContentUrl(thisBookmark1[i].url, thisBookmark1[i].title, storage)); //checkLevels(thisBookmark1[i].url);
+							const dropdownDomain = resolveUrlPath(storage, normalizeContentUrl(thisBookmark1[i].url, thisBookmark1[i].title, storage)); //checkLevels(thisBookmark1[i].url);
 
 							//console.log(dropdownDomain);
 
 							//Add a dropdown with the bookmarks info
 							if (thisBookmark1[i].title.indexOf(" (ABU)") == -1) {
 								//If the bookmark is untitled, let the user know
-								thisBookmarkTitle = thisBookmark1[i].title;
+								let thisBookmarkTitle = thisBookmark1[i].title;
 								if (thisBookmarkTitle == "") {
 									thisBookmarkTitle = "(Untitled)";
 								}
@@ -374,7 +419,7 @@ function createPage() {
 					}
 				}
 				mainButton.onclick = function () {
-					ABU(domain, false, true);
+					ABU(domain, false);
 				};
 			});
 		} else {
@@ -383,16 +428,16 @@ function createPage() {
 				if (!thisBookmark2) {
 					chrome.storage.sync.remove(domain);
 				} else {
-					check = false;
+					let check = false;
 					for (let i = 0; i < thisBookmark2.length; i++) {
 						if (thisBookmark2[i] && domain == resolveUrlPath(thisBookmark2, normalizeContentUrl(thisBookmark2[i].url, thisBookmark2[i].title, storage))) {
-							check = i;
+							check = true;
 						}
 					}
 
 					//GO THROUGH THE FOR LOOP (otherwise won't work with multiple pages and if in a higher-level domain; need to check for that)
 
-					if (thisBookmark2[0] && !isNaN(check)) {
+					if (thisBookmark2[0] && check) {
 						//If we've found out the bookmark claimed to exist does, set the button so that:
 						mainButton.innerHTML = "Revert to normal bookmark";
 						mainButton.style.backgroundColor = "#f00";
@@ -405,7 +450,7 @@ function createPage() {
 						mainButton.innerHTML = "Create ABUkmark";
 						mainButton.style.backgroundColor = "#619919";
 						mainButton.onclick = function () {
-							ABU(domain, false, false);
+							ABU(domain, false);
 						};
 					}
 				}
