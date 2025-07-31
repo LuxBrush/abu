@@ -216,10 +216,13 @@ function resolveUrlPath(storage, urlPath) {
 //Any changes to the URL call this- even a querystring change
 chrome.tabs.onUpdated.addListener(function (_tabId, changeInfo, updatedTab) {
 	//Check for ABUids on loading (we don't want to wait until it finishes loading to check, in some cases that could take a while or the ABUid could break PHP or other web code)
-	if (changeInfo.status == "loading") {
+	if (changeInfo.status === "loading") {
 		//console.log(updatedTab.url);
 
 		//Save the URL without an ABUid
+		if (!updatedTab.url) {
+			throw new Error("Tab URL is undefined or null");
+		}
 		let newURL = updatedTab.url.replace(/(\?|\&)ABUid.*/, "");
 
 		//If the URL had an ABUid, remove it
