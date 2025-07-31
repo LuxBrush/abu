@@ -70,9 +70,9 @@ function normalizeContentUrl(url, title, storage) {
 	// Handle different types of URLs based on their structure
 	if (path) {
 		// Check for special key folders (e.g., /blog/, /comic/)
-		const keywordMatch = path.match(/\/(?:blog|comic)\/[^/]*/i);
+		const keywordMatch = path.match(/\/(?:blog|comic|strip)\//i);
 		if (keywordMatch) {
-			output += keywordMatch[0].substring(1) + "/";
+			output += keywordMatch[0].substring(1);
 		}
 		// Check for indicative path segments (e.g., season-, ep-, etc.)
 		else {
@@ -80,10 +80,10 @@ function normalizeContentUrl(url, title, storage) {
 			if (indicativeMatch && indicativeMatch[0]) {
 				output += indicativeMatch[0].substring(1);
 			} else {
-				// Default to first two path segments if no special patterns found
+				// Default to first path segment if no special patterns found
 				const pathSegments = path.split("/").filter(Boolean);
 				if (pathSegments.length > 0) {
-					output += pathSegments.slice(0, 2).join("/") + "/";
+					output += pathSegments.slice(0, 1).join("/") + "/";
 				}
 			}
 		}
