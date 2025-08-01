@@ -374,7 +374,7 @@ function createPage() {
 				warning += "ABUkmark a subpage if possible so visiting about, archives, links, etc doesn't update bookmarks. Just click on an article, a back button, or a button to start reading and it should be perfect!<br>";
 		}
 
-		let anywhereButtons = "";
+		let anywhereButtonsString = "";
 
 		domain = resolveUrlPath(storage, domain);
 
@@ -520,30 +520,37 @@ function createPage() {
 			});
 
 			// Add the button if it exists
-			anywhereButtons += `<button data-id="${abuBookmark.ABUid}" data-domain="${key}">&times; <img src="${abuBookmark.favIconUrl}"> ${key}</button>`;
+			anywhereButtonsString += `<button data-id="${abuBookmark.ABUid}" data-domain="${key}">&times; <img src="${abuBookmark.favIconUrl}"> ${key}</button>`;
 		}
 
 		//If the user doesn't have any ABUkmarks, don't show the horizontal rule
-		if (anywhereButtons == "") {
+		if (anywhereButtonsString == "") {
 			document.getElementsByTagName("hr")[0].style.display = "none";
 		}
 
 		console.log("Any favicons not found will produce errors below (it's not really worth worrying about)");
 
-		document.getElementById("abu-anywhere").innerHTML = anywhereButtons;
+		const anywhereDiv = document.getElementById("abu-anywhere");
+		if (!anywhereDiv) {
+			throw new Error("Element with ID 'abu-anywhere' not found");
+		}
 
-		let buttons = document.getElementById("abu-anywhere").children;
+		anywhereDiv.innerHTML = anywhereButtonsString;
+
+		let anywhereButtons = /** @type {HTMLCollectionOf<HTMLButtonElement>} */ (anywhereDiv.children);
 		let images = document.getElementsByTagName("img");
 
-		//Add functions for each button
-		for (let ii = 0; ii < buttons.length; ii++) {
-			buttons[ii].onclick = function () {
-				unABU(this.dataset.domain, this.dataset.id);
+		// Add functions for each button
+		for (let ii = 0; ii < anywhereButtons.length; ii++) {
+			const anywhereButton = anywhereButtons[ii];
+			anywhereButton.onclick = () => {
+				unABU(anywhereButton.dataset.domain, anywhereButton.dataset.id);
 			};
 
 			//Hide any images that fail to load properly
-			images[ii].onerror = function () {
-				this.style = "display:none;";
+			const image = images[ii];
+			image.onerror = () => {
+				image.style = "display:none;";
 			};
 		}
 	});
