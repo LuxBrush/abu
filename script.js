@@ -597,7 +597,12 @@ function ABU(domainPath, forceCreateNew) {
 
 		//Get the bookmark to change with this:
 		if (selectElement.options[selectElement.selectedIndex].className !== "") {
-			inArrayDomain = selectElement.options[selectElement.selectedIndex].dataset.domain;
+			const domainString = selectElement.options[selectElement.selectedIndex].dataset.domain;
+			if (!domainString) {
+				console.error("Domain string is undefined or null for selected bookmark");
+				return;
+			}
+			inArrayDomain = domainString;
 		}
 	}
 
