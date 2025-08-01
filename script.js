@@ -574,7 +574,19 @@ function overwriteWarning(bookmark) {
 	}
 }
 
-function ABU(input, mustMakeNew) {
+/**
+ * Creates or updates an ABUkmark for the specified domain.
+ * Converts existing bookmarks to ABUkmarks or creates new ones.
+ *
+ * @param {string} domainPath - The processed domain path (e.g., "example.com/blog/")
+ * @param {boolean} forceCreateNew - If true, creates new ABUkmark even if bookmark exists
+ * @returns {void}
+ *
+ * @example
+ * ABU("example.com/blog/", false); // Convert existing bookmark
+ * ABU("example.com/blog/", true);  // Force create new ABUkmark
+ */
+function ABU(domainPath, forceCreateNew) {
 	const mainButton = Get.elementByID("current-page");
 	let inArray = 0;
 	let inArrayDomain = "";
@@ -589,8 +601,8 @@ function ABU(input, mustMakeNew) {
 		}
 	}
 
-	chrome.bookmarks.search(input, function (thisBookmark) {
-		if (!thisBookmark[inArray] || mustMakeNew) {
+	chrome.bookmarks.search(domainPath, function (thisBookmark) {
+		if (!thisBookmark[inArray] || forceCreateNew) {
 			//If the bookmark doesn't exist
 
 			//Check for ABUkmarks folder, add if doesn't exist
@@ -598,11 +610,11 @@ function ABU(input, mustMakeNew) {
 				if (!thisFolder[0]) {
 					//If folder ABUkmarks doesn't exist
 					chrome.bookmarks.create({ title: "ABUkmarks" }, function (newFolder) {
-						createABUkmark(input, newFolder.id);
+						createABUkmark(domainPath, newFolder.id);
 					});
 				} else {
 					//If the folder exists
-					createABUkmark(input, thisFolder[0].id);
+					createABUkmark(domainPath, thisFolder[0].id);
 				}
 				//Not always located there; get exact location and state it
 				setNotification("New ABUkmark located in <em>Other bookmarks &#8594; ABUkmarks</em>");
@@ -616,7 +628,7 @@ function ABU(input, mustMakeNew) {
 
 			let ABUid = Date.now();
 
-			storeObj(input, ABUid);
+			storeObj(domainPath, ABUid);
 
 			chrome.bookmarks.update(thisBookmark[inArray].id, { title: title + " (ABU)", url: createABURL(url, ABUid) });
 
