@@ -490,35 +490,37 @@ function createPage() {
 			});
 		}
 
-		let bookmarks = Object.keys(storage);
+		let storageKeys = Object.keys(storage);
 
-		//Create buttons for removing ABUkmarks
-		for (let i = 0; i < bookmarks.length; i++) {
-			//Don't create a button for the webpage domain we're on
-			//Don't create a button for the ABUVersion object, which checks the current version in use.
-			if (bookmarks[i] == domain || bookmarks[i] == "ABUVersion") {
+		// Create buttons for removing ABUkmarks
+		for (const key of storageKeys) {
+			// Don't create a button for the webpage domain we're on
+			// Don't create a button for the ABUVersion object, which checks the current version in use.
+			if (key === domain || key === "ABUVersion") {
 				continue;
 			}
+			const abuBookmark = storage[key];
+			if (!abuBookmark) {
+				throw new Error(`Storage data not found for key: ${key}`);
+			}
 
-			//Look for the bookmarks as we go through the list, to make sure they still exist.
-			chrome.bookmarks.search("ABUid=" + storage[bookmarks[i]]["ABUid"], function (thisBookmark3) {
-				//console.log(storage[bookmarks[i]]["ABUid"],"Bookmark is: ",thisBookmark3,thisBookmark3.length);
+			// Look for the bookmarks as we go through the list, to make sure they still exist.
+			chrome.bookmarks.search(`ABUid=${abuBookmark.ABUid}`, (bookmarks) => {
+				// If a bookmark in the list doesn't exist
+				if (bookmarks.length === 0) {
+					const ABUid = abuBookmark.ABUid;
 
-				//If a bookmark in the list doesn't exist
-				if (thisBookmark3.length === 0) {
-					let ABUid = storage[bookmarks[i]]["ABUid"];
+					// Remove the info
+					chrome.storage.sync.remove(key);
 
-					//Remove the info
-					chrome.storage.sync.remove(bookmarks[i]);
-
-					//Remove the element, if it exists
-					if ((ABUid = document.querySelector('button[data-id="' + ABUid + '"]'))) ABUid.remove();
+					// Remove the element, if it exists
+					const abuButton = document.querySelector(`button[data-id="${ABUid}"]`);
+					if (abuButton) abuButton.remove();
 				}
 			});
 
-			//Add the button if it exists
-			anywhereButtons +=
-				"<button data-id='" + storage[Object.keys(storage)[i]]["ABUid"] + "' data-domain='" + Object.keys(storage)[i] + "'>&times; <img src='" + storage[Object.keys(storage)[i]]["favIconUrl"] + "'> " + Object.keys(storage)[i] + "</button>";
+			// Add the button if it exists
+			anywhereButtons += `<button data-id="${abuBookmark.ABUid}" data-domain="${key}">&times; <img src="${abuBookmark.favIconUrl}"> ${key}</button>`;
 		}
 
 		//If the user doesn't have any ABUkmarks, don't show the horizontal rule
