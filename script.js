@@ -306,11 +306,12 @@ function updateTabInfo(thisTab) {
 
 		// In case this gets changed elsewhere, keep it the same here
 		let localDomain = domain;
+		const localDomainData = storage[localDomain];
 
 		//If this domain has an ABUkmark associated with it
-		if (storage[localDomain]) {
+		if (localDomainData) {
 			//Check that the bookmark hasn't been deleted
-			chrome.bookmarks.search("ABUid=" + storage[localDomain]["ABUid"], async function (targetABUkmark) {
+			chrome.bookmarks.search("ABUid=" + localDomainData.ABUid, async function (targetABUkmark) {
 				if (!thisTab.url) {
 					throw new Error("Tab URL is undefined or null");
 				}
@@ -325,7 +326,7 @@ function updateTabInfo(thisTab) {
 					//If you're saving for the comic pages, don't update bookmarks for the comic/archive pages. If this isn't a comics page, it'll run this too
 					if (!(thisTab.url.endsWith("/archive") && localDomain.endsWith("comic/"))) {
 						//Get the target ABUkmark's id and update that ABUkmark with this tab's URL
-						chrome.bookmarks.update(targetABUkmark[0].id, { title: thisTab.title + " (ABU)", url: createABURL(thisTab.url, storage[localDomain]["ABUid"]) });
+						chrome.bookmarks.update(targetABUkmark[0].id, { title: thisTab.title + " (ABU)", url: createABURL(thisTab.url, localDomainData.ABUid) });
 
 						//TESTING FAVICONS//
 						//thisTab.url=ABURL;
