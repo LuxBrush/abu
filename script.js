@@ -501,22 +501,20 @@ function createPage() {
 			}
 
 			//Look for the bookmarks as we go through the list, to make sure they still exist.
-			if (
-				chrome.bookmarks.search("ABUid=" + storage[bookmarks[i]]["ABUid"], function (thisBookmark3) {
-					//console.log(storage[bookmarks[i]]["ABUid"],"Bookmark is: ",thisBookmark3,thisBookmark3.length);
+			chrome.bookmarks.search("ABUid=" + storage[bookmarks[i]]["ABUid"], function (thisBookmark3) {
+				//console.log(storage[bookmarks[i]]["ABUid"],"Bookmark is: ",thisBookmark3,thisBookmark3.length);
 
-					//If a bookmark in the list doesn't exist
-					if (thisBookmark3.length === 0) {
-						let ABUid = storage[bookmarks[i]]["ABUid"];
+				//If a bookmark in the list doesn't exist
+				if (thisBookmark3.length === 0) {
+					let ABUid = storage[bookmarks[i]]["ABUid"];
 
-						//Remove the info
-						chrome.storage.sync.remove(bookmarks[i]);
+					//Remove the info
+					chrome.storage.sync.remove(bookmarks[i]);
 
-						//Remove the element, if it exists
-						if ((ABUid = document.querySelector('button[data-id="' + ABUid + '"]'))) ABUid.remove();
-					}
-				})
-			);
+					//Remove the element, if it exists
+					if ((ABUid = document.querySelector('button[data-id="' + ABUid + '"]'))) ABUid.remove();
+				}
+			});
 
 			//Add the button if it exists
 			anywhereButtons +=
