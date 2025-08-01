@@ -382,13 +382,17 @@ function createPage() {
 			//If we don't have an ABUkmark for this site
 			chrome.bookmarks.search(domain, function (thisBookmark1) {
 				if (thisBookmark1[0]) {
+					const firstBookmark = thisBookmark1[0];
+					if (!firstBookmark.url) {
+						throw new Error("Bookmark URL is undefined or null");
+					}
 					//If the bookmark exists
 					mainButton.innerHTML = "Convert to ABUkmark";
 					mainButton.style.backgroundColor = "#9ccc5e";
 
-					overwriteWarning(thisBookmark1[0]);
+					overwriteWarning(firstBookmark);
 
-					setNotification(warning + "Will convert <em title='" + thisBookmark1[0].url + "'>" + thisBookmark1[0].title + "</em>. <span id='onlyNewABU'>Or, make a new ABUkmark.</span>");
+					setNotification(warning + "Will convert <em title='" + firstBookmark.url + "'>" + firstBookmark.title + "</em>. <span id='onlyNewABU'>Or, make a new ABUkmark.</span>");
 					if (thisBookmark1.length > 1) {
 						let bookmarksChoose = "";
 
@@ -396,25 +400,29 @@ function createPage() {
 
 						//Create a dropdown so you can choose which to change
 						for (let i = 0; i < thisBookmark1.length; i++) {
+							const currentBookmark = thisBookmark1[i];
+							if (!currentBookmark.url) {
+								throw new Error("Current Bookmark URL is undefined or null");
+							}
 							warningClass = "";
 
 							overwriteWarning(thisBookmark1[i]);
 
-							const dropdownDomain = resolveUrlPath(storage, normalizeContentUrl(thisBookmark1[i].url, thisBookmark1[i].title, storage)); //checkLevels(thisBookmark1[i].url);
+							const dropdownDomain = resolveUrlPath(storage, normalizeContentUrl(currentBookmark.url, currentBookmark.title, storage)); //checkLevels(thisBookmark1[i].url);
 
 							//console.log(dropdownDomain);
 
 							//Add a dropdown with the bookmarks info
-							if (thisBookmark1[i].title.indexOf(" (ABU)") == -1) {
+							if (currentBookmark.title.indexOf(" (ABU)") === -1) {
 								//If the bookmark is untitled, let the user know
-								let thisBookmarkTitle = thisBookmark1[i].title;
+								let thisBookmarkTitle = currentBookmark.title;
 								if (thisBookmarkTitle == "") {
 									thisBookmarkTitle = "(Untitled)";
 								}
 
-								bookmarksChoose += "<option class='" + warningClass + "' title='" + thisBookmark1[i].url + "' data-domain='" + dropdownDomain + "' value='" + thisBookmark1[i].id + "'>" + thisBookmarkTitle + "</option>";
+								bookmarksChoose += "<option class='" + warningClass + "' title='" + currentBookmark.url + "' data-domain='" + dropdownDomain + "' value='" + currentBookmark.id + "'>" + thisBookmarkTitle + "</option>";
 							} else {
-								bookmarksChoose += "<option class='overwrite' title='" + thisBookmark1[i].url + "' data-domain='" + dropdownDomain + "' value='" + thisBookmark1[i].id + "'>" + thisBookmark1[i].title + "</option>";
+								bookmarksChoose += "<option class='overwrite' title='" + currentBookmark.url + "' data-domain='" + dropdownDomain + "' value='" + currentBookmark.id + "'>" + currentBookmark.title + "</option>";
 							}
 						}
 						setNotification(warning + thisBookmark1.length + " bookmarks spotted. Will convert <select>" + bookmarksChoose + "</select>. <span id='onlyNewABU'>Or, make a new ABUkmark.</span>");
@@ -445,8 +453,12 @@ function createPage() {
 					chrome.storage.sync.remove(domain);
 				} else {
 					let check = false;
-					for (let i = 0; i < thisBookmark2.length; i++) {
-						if (thisBookmark2[i] && domain == resolveUrlPath(thisBookmark2, normalizeContentUrl(thisBookmark2[i].url, thisBookmark2[i].title, storage))) {
+					for (const bookmarkResult of thisBookmark2) {
+						if (!bookmarkResult.url) {
+							console.error("Bookmark result URL is undefined or null");
+							continue;
+						}
+						if (bookmarkResult && domain === resolveUrlPath(storage, normalizeContentUrl(bookmarkResult.url, bookmarkResult.title, storage))) {
 							check = true;
 						}
 					}
@@ -458,7 +470,11 @@ function createPage() {
 						mainButton.innerHTML = "Revert to normal bookmark";
 						mainButton.style.backgroundColor = "#f00";
 						mainButton.onclick = function () {
-							unABU(domain, storage[domain]["ABUid"]);
+							const domainData = storage[domain];
+							if (!domainData) {
+								throw new Error("Domain data not found in storage for unABU operation");
+							}
+							unABU(domain, domainData.ABUid);
 							chrome.browserAction.setIcon({ path: inactiveIcons });
 						};
 					} else {
