@@ -556,7 +556,17 @@ function createPage() {
 	});
 }
 
-//Warning when overwriting lower-level ABUkmarks
+/**
+ * Checks if a bookmark is an ABUkmark and adds a warning message if it is.
+ *
+ * This function is called when displaying bookmarks in the popup interface.
+ * It detects if a bookmark is already an ABUkmark (has "(ABU)" in the title)
+ * and adds a warning message to prevent users from accidentally overwriting
+ * existing ABUkmarks. It also sets the warningClass to "overwrite" which
+ * applies special styling to highlight the warning.
+ *
+ * @param {chrome.bookmarks.BookmarkTreeNode} bookmark - The bookmark object to check
+ */
 function overwriteWarning(bookmark) {
 	if (bookmark.title.indexOf(" (ABU)") !== -1 && warning.indexOf("overwrite") == -1) {
 		warningClass = "overwrite";
