@@ -712,17 +712,26 @@ function storeABUmark(domainPath, abuId) {
 	createPage();
 }
 
-//Make an ABUkmark back into a regular bookmark
-function unABU(setUrl, setId) {
+/**
+ * Converts an ABUkmark back into a regular bookmark.
+ * 
+ * @param {string} domainPath - The domain path key used in storage (e.g., "example.com/blog/")
+ * @param {number} abuId - The unique ABU identifier to find the bookmark
+ * @returns {void}
+ * 
+ * @example
+ * unABU("example.com/blog/", 1672531200000);
+ */
+function unABU(domainPath, abuId) {
 	//Get the bookmark
-	chrome.bookmarks.search("ABUid=" + setId, function (targetABUkmark) {
+	chrome.bookmarks.search("ABUid=" + abuId, function (targetABUkmark) {
 		//Remove the ABU tag
 		chrome.bookmarks.update(targetABUkmark[0].id, {
 			url: targetABUkmark[0].url.replace(/(\?|&)ABUid=[0-9]+/g, ""),
 			title: targetABUkmark[0].title.replace(" (ABU)", ""),
 		});
 	});
-	chrome.storage.sync.remove(setUrl, function () {
+	chrome.storage.sync.remove(domainPath, function () {
 		setNotification("");
 		createPage();
 	});
