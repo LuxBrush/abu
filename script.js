@@ -633,7 +633,7 @@ function ABU(domainPath, forceCreateNew) {
 
 			let ABUid = Date.now();
 
-			storeObj(domainPath, ABUid);
+			storeABUmark(domainPath, ABUid);
 
 			chrome.bookmarks.update(thisBookmark[inArray].id, { title: title + " (ABU)", url: createABURL(url, ABUid) });
 
@@ -655,7 +655,7 @@ function ABU(domainPath, forceCreateNew) {
 function createABUkmark(urlIdentifier, parentId) {
 	const ABUid = Date.now();
 	chrome.bookmarks.create({ parentId, title: `${title} (ABU)`, url: createABURL(url, ABUid) }, function () {
-		storeObj(urlIdentifier, ABUid);
+		storeABUmark(urlIdentifier, ABUid);
 	});
 }
 
@@ -694,12 +694,21 @@ function setNotification(html) {
 	notification.style.display = html !== "" ? "block" : "none";
 }
 
-//Stores an object in the user's synced data
-function storeObj(input, bookmarkId) {
-	const obj = {};
-	const foo = input;
-	obj[foo] = { "ABUid": bookmarkId, "favIconUrl": favIconUrl };
-	chrome.storage.sync.set(obj);
+/**
+ * Stores ABUkmark data in Chrome's synced storage.
+ *
+ * @param {string} domainPath - The domain path key for the ABUkmark (e.g., "example.com/blog/")
+ * @param {number} abuId - The unique ABU identifier timestamp
+ * @returns {void}
+ *
+ * @example
+ * storeABUmark("example.com/blog/", 1672531200000);
+ */
+function storeABUmark(domainPath, abuId) {
+	/** @type {StorageObject} */
+	const storageObj = {};
+	storageObj[domainPath] = { "ABUid": abuId, "favIconUrl": favIconUrl };
+	chrome.storage.sync.set(storageObj);
 	createPage();
 }
 

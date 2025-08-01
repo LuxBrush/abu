@@ -2,7 +2,7 @@
  * Type definition for the storage object used in ABU extension
  */
 type ABUStorage = {
-	ABUid: string;
+	ABUid: number;
 	favIconUrl: string;
 };
 
