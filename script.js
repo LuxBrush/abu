@@ -639,7 +639,7 @@ function ABU(domainPath, forceCreateNew) {
 
 			let ABUid = Date.now();
 
-			storeABUmark(domainPath, ABUid);
+			storeABUkmark(domainPath, ABUid);
 
 			chrome.bookmarks.update(thisBookmark[inArray].id, { title: title + " (ABU)", url: createABURL(url, ABUid) });
 
@@ -661,7 +661,7 @@ function ABU(domainPath, forceCreateNew) {
 function createABUkmark(urlIdentifier, parentId) {
 	const ABUid = Date.now();
 	chrome.bookmarks.create({ parentId, title: `${title} (ABU)`, url: createABURL(url, ABUid) }, function () {
-		storeABUmark(urlIdentifier, ABUid);
+		storeABUkmark(urlIdentifier, ABUid);
 	});
 }
 
@@ -708,9 +708,9 @@ function setNotification(html) {
  * @returns {void}
  *
  * @example
- * storeABUmark("example.com/blog/", 1672531200000);
+ * storeABUkmark("example.com/blog/", 1672531200000);
  */
-function storeABUmark(domainPath, abuId) {
+function storeABUkmark(domainPath, abuId) {
 	/** @type {StorageObject} */
 	const storageObj = {};
 	storageObj[domainPath] = { "ABUid": abuId, "favIconUrl": favIconUrl };
