@@ -543,8 +543,14 @@ function createPage() {
 		// Add functions for each button
 		for (let ii = 0; ii < anywhereButtons.length; ii++) {
 			const anywhereButton = anywhereButtons[ii];
+			const domainPath = anywhereButton.dataset.domain;
+			const abuId = anywhereButton.dataset.id;
+			if (!domainPath || !abuId) {
+				console.error("Domain or ID missing from button data attributes");
+				continue;
+			}
 			anywhereButton.onclick = () => {
-				unABU(anywhereButton.dataset.domain, anywhereButton.dataset.id);
+				unABU(domainPath, Number(abuId));
 			};
 
 			//Hide any images that fail to load properly
@@ -754,19 +760,24 @@ if (document.getElementById("current-page")) {
 	chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
 		//console.log(tabs);
 		//Need to get storage here, for getting the webpage
-		chrome.storage.sync.get(function (storage) {
-			url = tabs[0].url;
-			domain = normalizeContentUrl(url, tabs[0].title, storage);
-			title = tabs[0].title;
-			favIconUrl = tabs[0].favIconUrl;
+		chrome.storage.sync.get(function (/** @type {StorageObject} */ storage) {
+			const activeTab = tabs[0];
+			if (!activeTab.url || !activeTab.title || !activeTab.favIconUrl) {
+				console.error("Tab URL, title, or favIconUrl is undefined or null");
+				return;
+			}
+			url = activeTab.url;
+			domain = normalizeContentUrl(url, activeTab.title, storage);
+			title = activeTab.title;
+			favIconUrl = activeTab.favIconUrl;
 
 			//Link to email me
-			document.getElementById("email").onclick = function () {
+			Get.elementByID("email").onclick = () => {
 				chrome.tabs.create({ active: true, url: "mailto:joshuapowlison@gmail.com", index: tabs[0].index + 1 });
 			};
 
 			//Link to my website
-			document.getElementById("website").onclick = function () {
+			Get.elementByID("website").onclick = () => {
 				chrome.tabs.create({ active: true, url: "https://joshpowlison.com/", index: tabs[0].index + 1 });
 			};
 
