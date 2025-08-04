@@ -256,15 +256,17 @@ function normalizeContentUrl(url, title, storage) {
 
 	// YOUTUBE URLS
 	// Handle various YouTube URL formats including videos, playlists, shorts, and live streams
-	const ytMatch = url.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?|shorts)\/(?!.*?\blist=)|.*[?&]v=)|youtu\.be\/)([\w-]{11})(?:(?:(?=[^?&]*\?)|[?&])(?:list=|t=|start=|end=)([^&]*))?/i);
+	// First check for video ID
+	const videoIdMatch = url.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?|shorts)\/|.*[?&]v=)|youtu\.be\/)([\w-]{11})/i);
+	// Separately check for playlist ID
+	const playlistMatch = url.match(/[?&]list=([^&#]*)/i);
 
-	if (ytMatch) {
-		const videoId = ytMatch[1];
-		const listId = ytMatch[2];
-
-		if (listId) {
+	if (videoIdMatch) {
+		const videoId = videoIdMatch[1];
+		
+		if (playlistMatch) {
 			// For playlist URLs, use the list parameter
-			special = `?list=${listId}`;
+			special = `?list=${playlistMatch[1]}`;
 		} else if (videoId) {
 			// For video URLs, use the video ID
 			special = `?v=${videoId}`;
