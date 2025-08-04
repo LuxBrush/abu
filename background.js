@@ -3,9 +3,6 @@ import { createABURL, normalizeContentUrl, resolveUrlPath } from "./tools.js";
 const activeIcons = { "128": "icons/128blue.png" };
 const inactiveIcons = { "128": "icons/128gray.png" };
 
-//Call the variables here
-let domain = "";
-
 console.log("May get an error: Unchecked runtime.lastError: The tab was closed. The code should keep running, but there's no way to check for if a tab exists; only to hide the error. I opted for just letting it be. :P");
 
 //Any changes to the URL call this- even a querystring change
@@ -107,7 +104,7 @@ function updateTabInfo(thisTab) {
 		}
 		//NOT DONE YET: If the page is part of a higher domain that we ARE keeping track of but we don't have a direct domain for this one, let's go up some levels:
 
-		domain = resolveUrlPath(storage, normalizeContentUrl(thisTab.url, thisTab.title, storage));
+		const domain = resolveUrlPath(storage, normalizeContentUrl(thisTab.url, thisTab.title, storage));
 
 		// In case this gets changed elsewhere, keep it the same here
 		let localDomain = domain;
