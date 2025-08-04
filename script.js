@@ -27,21 +27,6 @@ console.log("May get an error: Unchecked runtime.lastError: The tab was closed. 
  * @param {string} title - The title of the page (used for certain special cases)
  * @param {StorageObject} storage - The storage object containing ABUkmark configurations
  * @returns {string} The processed URL segment to use as an ABUkmark key
- *
- * @example
- * // Basic URL processing
- * getWebpage('https://example.com/blog/post-123', 'Blog Post');
- * // Returns: 'example.com/blog/'
- *
- * @example
- * // Special case handling for YouTube
- * getWebpage('https://www.youtube.com/watch?v=dQw4w9WgXcQ', 'YouTube Video');
- * // Returns: '?v=dQw4w9WgXcQ'
- *
- * @example
- * // Special case for Tapas
- * getWebpage('https://tapas.io/episode/12345', 'Series Name :: Episode Title');
- * // Returns: 'tapas.io/'
  */
 function normalizeContentUrl(url, title, storage) {
 	// Validate input
