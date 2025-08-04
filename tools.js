@@ -1,4 +1,81 @@
-const { Get } = Check();
+const Get = {
+	/**
+	 * Gets an element by its ID.
+	 * @param {string} id - The element ID.
+	 * @returns {HTMLElement} The found element.
+	 * @throws {Error} If element is not found.
+	 */
+	elementByID(id) {
+		const item = document.getElementById(id);
+		if (item === null) {
+			console.log("element:", item);
+			throw new Error("Element is null in elementByID.");
+		} else {
+			return item;
+		}
+	},
+	/**
+	 * Gets a button element by its ID.
+	 * @param {string} id - The button ID.
+	 * @returns {HTMLButtonElement} The found button element.
+	 * @throws {Error} If element is not found or is not a button.
+	 */
+	button(id) {
+		const item = document.getElementById(id);
+		if (item === null) {
+			console.log("element:", item);
+			throw new Error("Element is null in button.");
+		} else {
+			if (item instanceof HTMLButtonElement) {
+				return item;
+			} else {
+				throw new Error("Element is not a button.");
+			}
+		}
+	},
+	/**
+	 * Gets elements by tag name.
+	 * @param {string} tag - The tag name.
+	 * @returns {HTMLCollectionOf<Element>} Collection of found elements.
+	 * @throws {Error} If no elements are found.
+	 */
+	elementByTag(tag) {
+		const item = document.getElementsByTagName(tag);
+		if (item === null) {
+			console.log("element:", item);
+			throw new Error("Element is null in elementByTag.");
+		} else {
+			return item;
+		}
+	},
+	/**
+	 * Gets elements by class name.
+	 * @param {string} className - The class name.
+	 * @returns {Element[]} Array of found elements.
+	 * @throws {Error} If any element is null.
+	 */
+	elementsByClass(className) {
+		const elements = Array.from(document.getElementsByClassName(className));
+		const checked_items = [];
+		for (const element of elements) {
+			if (element === null) {
+				console.log("element:", element);
+				continue;
+			}
+			checked_items.push(element);
+		}
+		return checked_items;
+	},
+	/**
+	 * Gets the bounding client rect of an element.
+	 * @param {string} id - The element ID.
+	 * @returns {DOMRect} The element's bounding client rect.
+	 */
+	boundingClientRect(id) {
+		const element = this.elementByID(id);
+		return element.getBoundingClientRect();
+	},
+};
 /**
  * Creates a URL with an ABU (Automatic Bookmark Updater) identifier appended as a query parameter.
  * The function automatically handles the appropriate URL parameter separator (? or &) based on the input URL.
@@ -218,87 +295,4 @@ function normalizeContentUrl(url, title, storage) {
 	return output;
 }
 
-function Check() {
-	return {
-		Get: {
-			/**
-			 * Gets an element by its ID.
-			 * @param {string} id - The element ID.
-			 * @returns {HTMLElement} The found element.
-			 * @throws {Error} If element is not found.
-			 */
-			elementByID(id) {
-				const item = document.getElementById(id);
-				if (item === null) {
-					console.log("element:", item);
-					throw new Error("Element is null in elementByID.");
-				} else {
-					return item;
-				}
-			},
-			/**
-			 * Gets a button element by its ID.
-			 * @param {string} id - The button ID.
-			 * @returns {HTMLButtonElement} The found button element.
-			 * @throws {Error} If element is not found or is not a button.
-			 */
-			button(id) {
-				const item = document.getElementById(id);
-				if (item === null) {
-					console.log("element:", item);
-					throw new Error("Element is null in button.");
-				} else {
-					if (item instanceof HTMLButtonElement) {
-						return item;
-					} else {
-						throw new Error("Element is not a button.");
-					}
-				}
-			},
-			/**
-			 * Gets elements by tag name.
-			 * @param {string} tag - The tag name.
-			 * @returns {HTMLCollectionOf<Element>} Collection of found elements.
-			 * @throws {Error} If no elements are found.
-			 */
-			elementByTag(tag) {
-				const item = document.getElementsByTagName(tag);
-				if (item === null) {
-					console.log("element:", item);
-					throw new Error("Element is null in elementByTag.");
-				} else {
-					return item;
-				}
-			},
-			/**
-			 * Gets elements by class name.
-			 * @param {string} className - The class name.
-			 * @returns {Element[]} Array of found elements.
-			 * @throws {Error} If any element is null.
-			 */
-			elementsByClass(className) {
-				const elements = Array.from(document.getElementsByClassName(className));
-				const checked_items = [];
-				for (const element of elements) {
-					if (element === null) {
-						console.log("element:", element);
-						continue;
-					}
-					checked_items.push(element);
-				}
-				return checked_items;
-			},
-			/**
-			 * Gets the bounding client rect of an element.
-			 * @param {string} id - The element ID.
-			 * @returns {DOMRect} The element's bounding client rect.
-			 */
-			boundingClientRect(id) {
-				const element = this.elementByID(id);
-				return element.getBoundingClientRect();
-			},
-		},
-	};
-}
-
-export { createABURL, setNotification, resolveUrlPath, normalizeContentUrl };
+export { createABURL, setNotification, resolveUrlPath, normalizeContentUrl, Get };
