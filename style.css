@@ -1,7 +1,13 @@
+*,
+*::before,
+*::after {
+	box-sizing: border-box;
+}
+
 body {
 	margin: 0;
+	padding: 0.25rem;
 	min-width: 400px;
-	height: 1px;
 }
 
 #current-page {
