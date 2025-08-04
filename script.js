@@ -320,7 +320,7 @@ function updateTabInfo(thisTab) {
 
 						//If this new tab is the active one, update the icon:
 						if (thisTab.active) {
-							chrome.browserAction.setIcon({ path: activeIcons });
+							chrome.action.setIcon({ path: activeIcons });
 						}
 					}
 				}
@@ -329,7 +329,7 @@ function updateTabInfo(thisTab) {
 			//If this webpage doesn't have an associated ABUkmark
 			//If this new tab is the current one, update the icon:
 			if (thisTab.active) {
-				chrome.browserAction.setIcon({ path: inactiveIcons });
+				chrome.action.setIcon({ path: inactiveIcons });
 			}
 		}
 	});
@@ -462,7 +462,7 @@ function createPage() {
 								throw new Error("Domain data not found in storage for unABU operation");
 							}
 							unABU(domain, domainData.ABUid);
-							chrome.browserAction.setIcon({ path: inactiveIcons });
+							chrome.action.setIcon({ path: inactiveIcons });
 						};
 					} else {
 						chrome.storage.sync.remove(domain);
@@ -633,7 +633,7 @@ function ABU(domainPath, forceCreateNew) {
 		}
 	});
 
-	chrome.browserAction.setIcon({ path: activeIcons });
+	chrome.action.setIcon({ path: activeIcons });
 }
 
 /**
