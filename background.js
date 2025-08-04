@@ -1,4 +1,4 @@
-import { createABURL } from "./tools.js";
+import { createABURL, setNotification } from "./tools.js";
 const { Get } = Check();
 //Icons
 const activeIcons = { "128": "icons/128blue.png" };
@@ -320,7 +320,7 @@ function updateTabInfo(thisTab) {
 
 						//If this new tab is the active one, update the icon:
 						if (thisTab.active) {
-							chrome.browserAction.setIcon({ path: activeIcons });
+							chrome.action.setIcon({ path: activeIcons });
 						}
 					}
 				}
@@ -329,7 +329,7 @@ function updateTabInfo(thisTab) {
 			//If this webpage doesn't have an associated ABUkmark
 			//If this new tab is the current one, update the icon:
 			if (thisTab.active) {
-				chrome.browserAction.setIcon({ path: inactiveIcons });
+				chrome.action.setIcon({ path: inactiveIcons });
 			}
 		}
 	});
@@ -379,7 +379,7 @@ function createPage() {
 
 					overwriteWarning(firstBookmark);
 
-					setNotification(warning + "Will convert <em title='" + firstBookmark.url + "'>" + firstBookmark.title + "</em>. <span id='onlyNewABU'>Or, make a new ABUkmark.</span>");
+					setNotification(warning + "Will convert <em title='" + firstBookmark.url + "'>" + firstBookmark.title + "</em>. <span id='onlyNewABU'>Or, make a new ABUkmark.</span>", ABU, domain);
 					if (thisBookmark1.length > 1) {
 						let bookmarksChoose = "";
 
@@ -412,7 +412,7 @@ function createPage() {
 								bookmarksChoose += "<option class='overwrite' title='" + currentBookmark.url + "' data-domain='" + dropdownDomain + "' value='" + currentBookmark.id + "'>" + currentBookmark.title + "</option>";
 							}
 						}
-						setNotification(warning + thisBookmark1.length + " bookmarks spotted. Will convert <select>" + bookmarksChoose + "</select>. <span id='onlyNewABU'>Or, make a new ABUkmark.</span>");
+						setNotification(warning + thisBookmark1.length + " bookmarks spotted. Will convert <select>" + bookmarksChoose + "</select>. <span id='onlyNewABU'>Or, make a new ABUkmark.</span>", ABU, domain);
 						mainButton.dataset.multiple = "1";
 					}
 				} else {
@@ -422,7 +422,7 @@ function createPage() {
 					mainButton.style.backgroundColor = "#619919";
 					//Set the notification if there's a warning
 					if (warning !== "") {
-						setNotification(warning);
+						setNotification(warning, ABU, domain);
 					}
 				}
 				mainButton.onclick = function () {
@@ -614,7 +614,7 @@ function ABU(domainPath, forceCreateNew) {
 					createABUkmark(domainPath, thisFolder[0].id);
 				}
 				//Not always located there; get exact location and state it
-				setNotification("New ABUkmark located in <em>Other bookmarks &#8594; ABUkmarks</em>");
+				setNotification("New ABUkmark located in <em>Other bookmarks &#8594; ABUkmarks</em>", ABU, domain);
 			});
 		} else {
 			//If the bookmark exists
@@ -629,7 +629,7 @@ function ABU(domainPath, forceCreateNew) {
 
 			chrome.bookmarks.update(thisBookmark[inArray].id, { title: title + " (ABU)", url: createABURL(url, ABUid) });
 
-			setNotification("");
+			setNotification("", ABU, domain);
 		}
 	});
 
@@ -652,28 +652,6 @@ function createABUkmark(urlIdentifier, parentId) {
 }
 
 /**
- * Updates the notification element's content and visibility, and sets up the click handler
- * for creating a new ABUkmark when the notification is shown.
- *
- * @param {string} html - The HTML content to display in the notification.
- *                         If an empty string, the notification will be hidden.
- * @returns {void}
- */
-function setNotification(html) {
-	const notification = Get.elementByID("notification");
-	const onlyNewABU = document.getElementById("onlyNewABU");
-	notification.innerHTML = html;
-
-	if (onlyNewABU) {
-		onlyNewABU.onclick = () => {
-			ABU(domain, true);
-		};
-	}
-
-	notification.style.display = html !== "" ? "block" : "none";
-}
-
-/**
  * Stores ABUkmark data in Chrome's synced storage.
  *
  * @param {string} domainPath - The domain path key for the ABUkmark (e.g., "example.com/blog/")
@@ -689,74 +667,6 @@ function storeABUkmark(domainPath, abuId) {
 	storageObj[domainPath] = { "ABUid": abuId, "favIconUrl": favIconUrl };
 	chrome.storage.sync.set(storageObj);
 	createPage();
-}
-
-/**
- * Converts an ABUkmark back into a regular bookmark.
- *
- * @param {string} domainPath - The domain path key used in storage (e.g., "example.com/blog/")
- * @param {number} abuId - The unique ABU identifier to find the bookmark
- * @returns {void}
- *
- * @example
- * unABU("example.com/blog/", 1672531200000);
- */
-function unABU(domainPath, abuId) {
-	//Get the bookmark
-	chrome.bookmarks.search("ABUid=" + abuId, function (targetABUkmark) {
-		const ABUkmark = targetABUkmark[0];
-		if (!ABUkmark.url) {
-			console.error("ABUkmark URL is undefined or null");
-			return;
-		}
-		//Remove the ABU tag
-		chrome.bookmarks.update(ABUkmark.id, {
-			url: ABUkmark.url.replace(/(\?|&)ABUid=[0-9]+/g, ""),
-			title: ABUkmark.title.replace(" (ABU)", ""),
-		});
-	});
-	chrome.storage.sync.remove(domainPath, function () {
-		setNotification("");
-		createPage();
-	});
-}
-
-//Run a popup's element is present, run the popup script!
-if (document.getElementById("current-page")) {
-	console.log("ABU popup loaded!");
-
-	//Have notifications depending on what's done
-	const mainButton = Get.elementByID("current-page");
-	mainButton.dataset.multiple = "0";
-
-	//Get URL
-	chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
-		//console.log(tabs);
-		//Need to get storage here, for getting the webpage
-		chrome.storage.sync.get(function (/** @type {StorageObject} */ storage) {
-			const activeTab = tabs[0];
-			if (!activeTab.url || !activeTab.title || !activeTab.favIconUrl) {
-				console.error("Tab URL, title, or favIconUrl is undefined or null");
-				return;
-			}
-			url = activeTab.url;
-			domain = normalizeContentUrl(url, activeTab.title, storage);
-			title = activeTab.title;
-			favIconUrl = activeTab.favIconUrl;
-
-			//Link to email me
-			Get.elementByID("email").onclick = () => {
-				chrome.tabs.create({ active: true, url: "mailto:joshuapowlison@gmail.com", index: tabs[0].index + 1 });
-			};
-
-			//Link to my website
-			Get.elementByID("website").onclick = () => {
-				chrome.tabs.create({ active: true, url: "https://joshpowlison.com/", index: tabs[0].index + 1 });
-			};
-
-			createPage();
-		});
-	});
 }
 
 function Check() {
