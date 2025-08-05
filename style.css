@@ -60,18 +60,41 @@ button:active {
 #credits {
 	text-align: center;
 	margin: 0.25rem;
+	display: flex;
+	justify-content: space-between;
 }
 
 .overwrite {
 	background-color: yellow;
 }
 
-#credits {
-	display: flex;
-	justify-content: space-between;
-}
-
 #update {
 	text-align: center;
 	font-weight: bold;
 }
+
+/* New styles for elements that previously used inline styles */
+.hidden {
+	display: none;
+}
+
+.visible {
+	display: block;
+}
+
+.create-abukmark {
+	background-color: #619919;
+}
+
+.convert-abukmark {
+	background-color: #9ccc5e;
+}
+
+.revert-bookmark {
+	background-color: #f00;
+}
+
+.hidden-image {
+	display: none;
+}
+

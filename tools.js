@@ -93,24 +93,43 @@ function createABURL(url, ABUid) {
  * Updates the notification element's content and visibility, and sets up the click handler
  * for creating a new ABUkmark when the notification is shown.
  *
- * @param {string} html - The HTML content to display in the notification.
- *                         If an empty string, the notification will be hidden.
- * @param {Function} ABU
- * @param {string} domain
+ * @param {string|Node|DocumentFragment} content - The content to display in the notification.
+ *                                               If an empty string, the notification will be hidden.
+ * @param {Function} [ABU] - The ABU function to call when creating a new ABUkmark.
+ * @param {string} [domain] - The domain to use when creating a new ABUkmark.
  * @returns {void}
  */
-function setNotification(html, ABU, domain) {
+function setNotification(content, ABU, domain) {
 	const notification = Get.elementByID("notification");
+	
+	// Clear existing content
+	while (notification.firstChild) {
+		notification.removeChild(notification.firstChild);
+	}
+	
+	// Add new content
+	if (content) {
+		if (typeof content === 'string') {
+			notification.innerHTML = content;
+		} else {
+			notification.appendChild(content);
+		}
+	}
+	
 	const onlyNewABU = document.getElementById("onlyNewABU");
-	notification.innerHTML = html;
-
-	if (onlyNewABU) {
+	if (onlyNewABU && ABU && domain) {
 		onlyNewABU.onclick = () => {
 			ABU(domain, true);
 		};
 	}
 
-	notification.style.display = html !== "" ? "block" : "none";
+	if (!content || (typeof content === 'string' && content === '')) {
+		notification.classList.add('hidden');
+		notification.classList.remove('visible');
+	} else {
+		notification.classList.add('visible');
+		notification.classList.remove('hidden');
+	}
 }
 
 /**

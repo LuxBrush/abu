@@ -1,4 +1,4 @@
-import { createABURL, Get, resolveUrlPath, normalizeContentUrl } from "./tools.js";
+import { createABURL, Get, resolveUrlPath, normalizeContentUrl, setNotification } from "./tools.js";
 //Icons
 const activeIcons = { "128": "icons/128blue.png" };
 const inactiveIcons = { "128": "icons/128gray.png" };
@@ -20,7 +20,10 @@ function createPage() {
 	chrome.storage.sync.get(function (/** @type {StorageObject} */ storage) {
 		//ABUVersion info
 		if (!storage.ABUVersion || storage.ABUVersion < ABUVersion) {
-			document.getElementsByTagName("BODY")[0].insertAdjacentHTML("afterbegin", "<p id='update'>ABU 1.4 adds support for mangahub.io. Always feel free to let me know if ABU doesn't work on any website!</p>");
+			const updateElement = document.createElement("p");
+			updateElement.id = "update";
+			updateElement.textContent = "ABU 1.4 adds support for mangahub.io. Always feel free to let me know if ABU doesn't work on any website!";
+			document.getElementsByTagName("BODY")[0].prepend(updateElement);
 			chrome.storage.sync.set({ "ABUVersion": ABUVersion });
 		}
 
@@ -42,6 +45,7 @@ function createPage() {
 		}
 
 		let anywhereButtonsString = "";
+		const anywhereButtonsFragment = document.createDocumentFragment();
 
 		domain = resolveUrlPath(storage, domain);
 
@@ -55,14 +59,41 @@ function createPage() {
 						throw new Error("Bookmark URL is undefined or null");
 					}
 					//If the bookmark exists
-					mainButton.innerHTML = "Convert to ABUkmark";
-					mainButton.style.backgroundColor = "#9ccc5e";
+					mainButton.textContent = "Convert to ABUkmark";
+					if (mainButton.classList.contains("revert-bookmark")) {
+						mainButton.classList.remove("revert-bookmark");
+					}
+					mainButton.classList.add("convert-abukmark");
 
 					overwriteWarning(firstBookmark);
 
-					setNotification(warning + "Will convert <em title='" + firstBookmark.url + "'>" + firstBookmark.title + "</em>. <span id='onlyNewABU'>Or, make a new ABUkmark.</span>");
+					const notificationContent = document.createDocumentFragment();
+
+					if (warning) {
+						const warningSpan = document.createElement("span");
+						warningSpan.innerHTML = warning; // Using innerHTML here as warning may contain HTML
+						notificationContent.appendChild(warningSpan);
+					}
+
+					const willConvertText = document.createTextNode("Will convert ");
+					notificationContent.appendChild(willConvertText);
+
+					const bookmarkEm = document.createElement("em");
+					bookmarkEm.title = firstBookmark.url;
+					bookmarkEm.textContent = firstBookmark.title;
+					notificationContent.appendChild(bookmarkEm);
+
+					const periodText = document.createTextNode(". ");
+					notificationContent.appendChild(periodText);
+
+					const newAbuSpan = document.createElement("span");
+					newAbuSpan.id = "onlyNewABU";
+					newAbuSpan.textContent = "Or, make a new ABUkmark.";
+					notificationContent.appendChild(newAbuSpan);
+
+					setNotification(notificationContent, ABU, domain);
 					if (thisBookmark1.length > 1) {
-						let bookmarksChoose = "";
+						const bookmarksChoose = document.createDocumentFragment();
 
 						warningClass = "";
 
@@ -88,22 +119,61 @@ function createPage() {
 									thisBookmarkTitle = "(Untitled)";
 								}
 
-								bookmarksChoose += "<option class='" + warningClass + "' title='" + currentBookmark.url + "' data-domain='" + dropdownDomain + "' value='" + currentBookmark.id + "'>" + thisBookmarkTitle + "</option>";
+								const option = document.createElement("option");
+								if (warningClass) {
+									option.className = warningClass;
+								}
+								option.title = currentBookmark.url;
+								option.dataset.domain = dropdownDomain;
+								option.value = currentBookmark.id;
+								option.textContent = thisBookmarkTitle;
+								bookmarksChoose.appendChild(option);
 							} else {
-								bookmarksChoose += "<option class='overwrite' title='" + currentBookmark.url + "' data-domain='" + dropdownDomain + "' value='" + currentBookmark.id + "'>" + currentBookmark.title + "</option>";
+								const option = document.createElement("option");
+								option.className = "overwrite";
+								option.title = currentBookmark.url;
+								option.dataset.domain = dropdownDomain;
+								option.value = currentBookmark.id;
+								option.textContent = currentBookmark.title;
+								bookmarksChoose.appendChild(option);
 							}
 						}
-						setNotification(warning + thisBookmark1.length + " bookmarks spotted. Will convert <select>" + bookmarksChoose + "</select>. <span id='onlyNewABU'>Or, make a new ABUkmark.</span>");
+						const notificationContent = document.createDocumentFragment();
+
+						if (warning) {
+							const warningSpan = document.createElement("span");
+							warningSpan.innerHTML = warning; // Using innerHTML here as warning may contain HTML
+							notificationContent.appendChild(warningSpan);
+						}
+
+						const bookmarksText = document.createTextNode(thisBookmark1.length + " bookmarks spotted. Will convert ");
+						notificationContent.appendChild(bookmarksText);
+
+						const selectElement = document.createElement("select");
+						selectElement.appendChild(bookmarksChoose);
+						notificationContent.appendChild(selectElement);
+
+						const periodText = document.createTextNode(". ");
+						notificationContent.appendChild(periodText);
+
+						const newAbuSpan = document.createElement("span");
+						newAbuSpan.id = "onlyNewABU";
+						newAbuSpan.textContent = "Or, make a new ABUkmark.";
+						notificationContent.appendChild(newAbuSpan);
+
+						setNotification(notificationContent, ABU, domain);
 						mainButton.dataset.multiple = "1";
 					}
 				} else {
 					//If it doesn't
 					//Change the button's text and color
-					mainButton.innerHTML = "Create ABUkmark";
-					mainButton.style.backgroundColor = "#619919";
+					mainButton.textContent = "Create ABUkmark";
+					mainButton.classList.add("create-abukmark");
 					//Set the notification if there's a warning
 					if (warning !== "") {
-						setNotification(warning);
+						const warningElement = document.createElement("span");
+						warningElement.innerHTML = warning; // Using innerHTML as warning may contain HTML
+						setNotification(warningElement, ABU, domain);
 					}
 				}
 				mainButton.onclick = function () {
@@ -135,8 +205,9 @@ function createPage() {
 
 					if (thisBookmark2[0] && check) {
 						//If we've found out the bookmark claimed to exist does, set the button so that:
-						mainButton.innerHTML = "Revert to normal bookmark";
-						mainButton.style.backgroundColor = "#f00";
+						mainButton.textContent = "Revert to normal bookmark";
+						mainButton.className = ""; // Clear any existing classes
+						mainButton.classList.add("revert-bookmark");
 						mainButton.onclick = function () {
 							const domainData = storage[domain];
 							if (!domainData) {
@@ -147,8 +218,9 @@ function createPage() {
 						};
 					} else {
 						chrome.storage.sync.remove(domain);
-						mainButton.innerHTML = "Create ABUkmark";
-						mainButton.style.backgroundColor = "#619919";
+						mainButton.textContent = "Create ABUkmark";
+						mainButton.className = ""; // Clear any existing classes
+						mainButton.classList.add("create-abukmark");
 						mainButton.onclick = function () {
 							ABU(domain, false);
 						};
@@ -187,12 +259,27 @@ function createPage() {
 			});
 
 			// Add the button if it exists
+			const button = document.createElement("button");
+			button.dataset.id = String(abuBookmark.ABUid);
+			button.dataset.domain = key;
+
+			const closeText = document.createTextNode("× ");
+			button.appendChild(closeText);
+
+			const img = document.createElement("img");
+			img.src = abuBookmark.favIconUrl;
+			button.appendChild(img);
+
+			const domainText = document.createTextNode(" " + key);
+			button.appendChild(domainText);
+
+			anywhereButtonsFragment.appendChild(button);
 			anywhereButtonsString += `<button data-id="${abuBookmark.ABUid}" data-domain="${key}">&times; <img src="${abuBookmark.favIconUrl}"> ${key}</button>`;
 		}
 
 		//If the user doesn't have any ABUkmarks, don't show the horizontal rule
 		if (anywhereButtonsString == "") {
-			document.getElementsByTagName("hr")[0].style.display = "none";
+			document.getElementsByTagName("hr")[0].classList.add("hidden");
 		}
 
 		console.log("Any favicons not found will produce errors below (it's not really worth worrying about)");
@@ -202,7 +289,8 @@ function createPage() {
 			throw new Error("Element with ID 'abu-anywhere' not found");
 		}
 
-		anywhereDiv.innerHTML = anywhereButtonsString;
+		anywhereDiv.innerHTML = ""; // Clear existing content
+		anywhereDiv.appendChild(anywhereButtonsFragment);
 
 		let anywhereButtons = /** @type {HTMLCollectionOf<HTMLButtonElement>} */ (anywhereDiv.children);
 		let images = document.getElementsByTagName("img");
@@ -223,7 +311,7 @@ function createPage() {
 			//Hide any images that fail to load properly
 			const image = images[ii];
 			image.onerror = () => {
-				image.style = "display:none;";
+				image.classList.add("hidden-image");
 			};
 		}
 	});
@@ -243,7 +331,16 @@ function createPage() {
 function overwriteWarning(bookmark) {
 	if (bookmark.title.indexOf(" (ABU)") !== -1 && warning.indexOf("overwrite") == -1) {
 		warningClass = "overwrite";
-		warning += "<strong>Don't accidentally overwrite ABUkmarks deeper in the website!</strong> If you do it, do it on purpose. Any bookmarks ending in (ABU) are ABUkmarks.<br>";
+
+		// Create warning message elements
+		const strongElement = document.createElement("strong");
+		strongElement.textContent = "Don't accidentally overwrite ABUkmarks deeper in the website!";
+
+		const warningText = " If you do it, do it on purpose. Any bookmarks ending in (ABU) are ABUkmarks.";
+
+		// For backward compatibility, we'll keep using the warning string
+		// but construct it in a way that can be safely used with innerHTML later
+		warning += strongElement.outerHTML + warningText + "<br>";
 	}
 }
 
@@ -295,7 +392,7 @@ function ABU(domainPath, forceCreateNew) {
 					createABUkmark(domainPath, thisFolder[0].id);
 				}
 				//Not always located there; get exact location and state it
-				setNotification("New ABUkmark located in <em>Other bookmarks &#8594; ABUkmarks</em>");
+				setNotification("New ABUkmark located in <em>Other bookmarks &#8594; ABUkmarks</em>", ABU, domain);
 			});
 		} else {
 			//If the bookmark exists
@@ -330,28 +427,6 @@ function createABUkmark(urlIdentifier, parentId) {
 	chrome.bookmarks.create({ parentId, title: `${title} (ABU)`, url: createABURL(url, ABUid) }, function () {
 		storeABUkmark(urlIdentifier, ABUid);
 	});
-}
-
-/**
- * Updates the notification element's content and visibility, and sets up the click handler
- * for creating a new ABUkmark when the notification is shown.
- *
- * @param {string} html - The HTML content to display in the notification.
- *                         If an empty string, the notification will be hidden.
- * @returns {void}
- */
-function setNotification(html) {
-	const notification = Get.elementByID("notification");
-	const onlyNewABU = document.getElementById("onlyNewABU");
-	notification.innerHTML = html;
-
-	if (onlyNewABU) {
-		onlyNewABU.onclick = () => {
-			ABU(domain, true);
-		};
-	}
-
-	notification.style.display = html !== "" ? "block" : "none";
 }
 
 /**
