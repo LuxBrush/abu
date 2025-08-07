@@ -56,7 +56,8 @@ function createPage() {
 				if (thisBookmark1[0]) {
 					const firstBookmark = thisBookmark1[0];
 					if (!firstBookmark.url) {
-						throw new Error("Bookmark URL is undefined or null");
+						console.error("Bookmark URL is undefined or null");
+						return;
 					}
 					//If the bookmark exists
 					mainButton.textContent = "Convert to ABUkmark";
@@ -101,7 +102,8 @@ function createPage() {
 						for (let i = 0; i < thisBookmark1.length; i++) {
 							const currentBookmark = thisBookmark1[i];
 							if (!currentBookmark.url) {
-								throw new Error("Current Bookmark URL is undefined or null");
+								console.error("Current Bookmark URL is undefined or null");
+								continue;
 							}
 							warningClass = "";
 
@@ -183,7 +185,8 @@ function createPage() {
 		} else {
 			const domainData = storage[domain];
 			if (!domainData) {
-				throw new Error("No ABUkmark found for this domain in storage");
+				console.error("No ABUkmark found for this domain in storage");
+				return;
 			}
 			//If we have an ABUkmark for this, according to our data
 			chrome.bookmarks.search("ABUid=" + domainData.ABUid, function (thisBookmark2) {
@@ -211,7 +214,8 @@ function createPage() {
 						mainButton.onclick = function () {
 							const domainData = storage[domain];
 							if (!domainData) {
-								throw new Error("Domain data not found in storage for unABU operation");
+								console.error("Domain data not found in storage for unABU operation");
+								return;
 							}
 							unABU(domain, domainData.ABUid);
 							chrome.action.setIcon({ path: inactiveIcons });
@@ -240,7 +244,8 @@ function createPage() {
 			}
 			const abuBookmark = storage[key];
 			if (!abuBookmark) {
-				throw new Error(`Storage data not found for key: ${key}`);
+				console.error(`Storage data not found for key: ${key}`);
+				continue;
 			}
 
 			// Look for the bookmarks as we go through the list, to make sure they still exist.
@@ -286,7 +291,8 @@ function createPage() {
 
 		const anywhereDiv = document.getElementById("abu-anywhere");
 		if (!anywhereDiv) {
-			throw new Error("Element with ID 'abu-anywhere' not found");
+			console.error("Element with ID 'abu-anywhere' not found");
+			return;
 		}
 
 		anywhereDiv.innerHTML = ""; // Clear existing content
