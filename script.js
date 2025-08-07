@@ -506,16 +506,6 @@ if (document.getElementById("current-page")) {
 			title = activeTab.title;
 			favIconUrl = activeTab.favIconUrl;
 
-			//Link to email me
-			Get.elementByID("email").onclick = () => {
-				chrome.tabs.create({ active: true, url: "mailto:joshuapowlison@gmail.com", index: tabs[0].index + 1 });
-			};
-
-			//Link to my website
-			Get.elementByID("website").onclick = () => {
-				chrome.tabs.create({ active: true, url: "https://joshpowlison.com/", index: tabs[0].index + 1 });
-			};
-
 			createPage();
 		});
 	});
