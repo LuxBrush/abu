@@ -6,13 +6,14 @@ let url = "";
 let domain = "";
 let title = "";
 let favIconUrl = "";
-let warningClass = "";
 
-//Warn about home page ABUkmarks going everywhere if they're on the home page
-let warning = "";
+// Note: warning and warningClass are now localized within createPage()
 
 function createPage() {
 	chrome.storage.sync.get(function (/** @type {StorageObject} */ storage) {
+		// Local UI state
+		let warning = "";
+		let warningClass = "";
 		// ABUVersion info (compare by equality to avoid numeric/string issues)
 		if (storage.ABUVersion !== ABUVersion) {
 			const updateElement = document.createElement("p");
@@ -60,7 +61,7 @@ function createPage() {
 					}
 					mainButton.classList.add("convert-abukmark");
 
-					overwriteWarning(firstBookmark);
+					({ warning, warningClass } = overwriteWarning(firstBookmark, warning));
 
 					const notificationContent = document.createDocumentFragment();
 
@@ -101,7 +102,7 @@ function createPage() {
 							}
 							warningClass = "";
 
-							overwriteWarning(thisBookmark1[i]);
+							({ warning, warningClass } = overwriteWarning(thisBookmark1[i], warning));
 
 							const dropdownDomain = resolveUrlPath(storage, normalizeContentUrl(currentBookmark.url, currentBookmark.title, storage)); //checkLevels(thisBookmark1[i].url);
 
@@ -318,18 +319,19 @@ function createPage() {
 }
 
 /**
- * Checks if a bookmark is an ABUkmark and adds a warning message if it is.
+ * Checks if a bookmark is an ABUkmark and returns updated warning state.
  *
- * This function is called when displaying bookmarks in the popup interface.
- * It detects if a bookmark is already an ABUkmark (has "(ABU)" in the title)
- * and adds a warning message to prevent users from accidentally overwriting
- * existing ABUkmarks. It also sets the warningClass to "overwrite" which
- * applies special styling to highlight the warning.
+ * Called when displaying bookmarks in the popup interface. If a bookmark is
+ * already an ABUkmark (title contains "(ABU)"), we append a warning message
+ * and set warningClass to "overwrite" for styling.
  *
- * @param {chrome.bookmarks.BookmarkTreeNode} bookmark - The bookmark object to check
+ * @param {chrome.bookmarks.BookmarkTreeNode} bookmark - The bookmark to check.
+ * @param {string} warning - The current warning HTML string.
+ * @returns {{ warning: string, warningClass: string }} Updated values.
  */
-function overwriteWarning(bookmark) {
-	if (bookmark.title.indexOf(" (ABU)") !== -1 && warning.indexOf("overwrite") == -1) {
+function overwriteWarning(bookmark, warning) {
+	let warningClass = "";
+	if (bookmark.title.indexOf(" (ABU)") !== -1 && warning.indexOf("overwrite") === -1) {
 		warningClass = "overwrite";
 
 		// Create warning message elements
@@ -338,10 +340,10 @@ function overwriteWarning(bookmark) {
 
 		const warningText = " If you do it, do it on purpose. Any bookmarks ending in (ABU) are ABUkmarks.";
 
-		// For backward compatibility, we'll keep using the warning string
-		// but construct it in a way that can be safely used with innerHTML later
+		// Build safe HTML string for later innerHTML usage
 		warning += strongElement.outerHTML + warningText + "<br>";
 	}
+	return { warning, warningClass };
 }
 
 /**
