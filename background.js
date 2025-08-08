@@ -1,20 +1,4 @@
-import { createABURL, normalizeContentUrl, resolveUrlPath, activeIcons, inactiveIcons } from "./tools.js";
-
-/**
- * Check if a URL is http(s).
- * @param {string} url URL to test.
- * @returns {boolean} True for http or https.
- * @example isHttpUrl('https://example.com') // true
- * @example isHttpUrl('ftp://example.com') // false
- */
-function isHttpUrl(url) {
-	try {
-		const p = new URL(url).protocol;
-		return p === "http:" || p === "https:";
-	} catch {
-		return false;
-	}
-}
+import { createABURL, normalizeContentUrl, resolveUrlPath, activeIcons, inactiveIcons, isHttpUrl } from "./tools.js";
 
 // Any changes to the URL call this- even a querystring change
 chrome.tabs.onUpdated.addListener(function (_tabId, changeInfo, updatedTab) {

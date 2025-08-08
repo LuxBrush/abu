@@ -276,4 +276,20 @@ function normalizeContentUrl(url, title, storage) {
 	return output;
 }
 
-export { createABURL, setNotification, resolveUrlPath, normalizeContentUrl, Get, activeIcons, inactiveIcons };
+/**
+ * Check if a URL is http(s).
+ * @param {string} url URL to test.
+ * @returns {boolean} True for http or https.
+ * @example isHttpUrl('https://example.com') // true
+ * @example isHttpUrl('ftp://example.com') // false
+ */
+function isHttpUrl(url) {
+	try {
+		const p = new URL(url).protocol;
+		return p === "http:" || p === "https:";
+	} catch {
+		return false;
+	}
+}
+
+export { createABURL, setNotification, resolveUrlPath, normalizeContentUrl, Get, activeIcons, inactiveIcons, isHttpUrl };
