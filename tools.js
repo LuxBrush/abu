@@ -101,21 +101,21 @@ function createABURL(url, ABUid) {
  */
 function setNotification(content, ABU, domain) {
 	const notification = Get.elementByID("notification");
-	
+
 	// Clear existing content
 	while (notification.firstChild) {
 		notification.removeChild(notification.firstChild);
 	}
-	
+
 	// Add new content
 	if (content) {
-		if (typeof content === 'string') {
+		if (typeof content === "string") {
 			notification.innerHTML = content;
 		} else {
 			notification.appendChild(content);
 		}
 	}
-	
+
 	const onlyNewABU = document.getElementById("onlyNewABU");
 	if (onlyNewABU && ABU && domain) {
 		onlyNewABU.onclick = () => {
@@ -123,12 +123,12 @@ function setNotification(content, ABU, domain) {
 		};
 	}
 
-	if (!content || (typeof content === 'string' && content === '')) {
-		notification.classList.add('hidden');
-		notification.classList.remove('visible');
+	if (!content || (typeof content === "string" && content === "")) {
+		notification.classList.add("hidden");
+		notification.classList.remove("visible");
 	} else {
-		notification.classList.add('visible');
-		notification.classList.remove('hidden');
+		notification.classList.add("visible");
+		notification.classList.remove("hidden");
 	}
 }
 
@@ -282,7 +282,7 @@ function normalizeContentUrl(url, title, storage) {
 
 	if (videoIdMatch) {
 		const videoId = videoIdMatch[1];
-		
+
 		if (playlistMatch) {
 			// For playlist URLs, use the list parameter
 			special = `?list=${playlistMatch[1]}`;

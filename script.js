@@ -14,8 +14,6 @@ let warningClass = "";
 //Warn about home page ABUkmarks going everywhere if they're on the home page
 let warning = "";
 
-console.log("May get an error: Unchecked runtime.lastError: The tab was closed. The code should keep running, but there's no way to check for if a tab exists; only to hide the error. I opted for just letting it be. :P");
-
 function createPage() {
 	chrome.storage.sync.get(function (/** @type {StorageObject} */ storage) {
 		//ABUVersion info
