@@ -3,13 +3,12 @@ const Get = {
 	 * Gets an element by its ID.
 	 * @param {string} id - The element ID.
 	 * @returns {HTMLElement} The found element.
-	 * @throws {Error} If element is not found.
+	 * @throws {Error} If element ID is not found.
 	 */
 	elementByID(id) {
 		const item = document.getElementById(id);
 		if (item === null) {
-			console.log("element:", item);
-			throw new Error("Element is null in elementByID.");
+			throw new Error(`Element "${id}" is not found.`);
 		} else {
 			return item;
 		}
@@ -18,18 +17,17 @@ const Get = {
 	 * Gets a button element by its ID.
 	 * @param {string} id - The button ID.
 	 * @returns {HTMLButtonElement} The found button element.
-	 * @throws {Error} If element is not found or is not a button.
+	 * @throws {Error} If element ID is not found or is not a button.
 	 */
 	button(id) {
 		const item = document.getElementById(id);
 		if (item === null) {
-			console.log("element:", item);
-			throw new Error("Element is null in button.");
+			throw new Error(`Button "${id}" is not found.`);
 		} else {
 			if (item instanceof HTMLButtonElement) {
 				return item;
 			} else {
-				throw new Error("Element is not a button.");
+				throw new Error(`Element "${id}" is not a button.`);
 			}
 		}
 	},
