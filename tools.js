@@ -31,48 +31,6 @@ const Get = {
 			}
 		}
 	},
-	/**
-	 * Gets elements by tag name.
-	 * @param {string} tag - The tag name.
-	 * @returns {HTMLCollectionOf<Element>} Collection of found elements.
-	 * @throws {Error} If no elements are found.
-	 */
-	elementByTag(tag) {
-		const item = document.getElementsByTagName(tag);
-		if (item === null) {
-			console.log("element:", item);
-			throw new Error("Element is null in elementByTag.");
-		} else {
-			return item;
-		}
-	},
-	/**
-	 * Gets elements by class name.
-	 * @param {string} className - The class name.
-	 * @returns {Element[]} Array of found elements.
-	 * @throws {Error} If any element is null.
-	 */
-	elementsByClass(className) {
-		const elements = Array.from(document.getElementsByClassName(className));
-		const checked_items = [];
-		for (const element of elements) {
-			if (element === null) {
-				console.log("element:", element);
-				continue;
-			}
-			checked_items.push(element);
-		}
-		return checked_items;
-	},
-	/**
-	 * Gets the bounding client rect of an element.
-	 * @param {string} id - The element ID.
-	 * @returns {DOMRect} The element's bounding client rect.
-	 */
-	boundingClientRect(id) {
-		const element = this.elementByID(id);
-		return element.getBoundingClientRect();
-	},
 };
 /**
  * Creates a URL with an ABU (Automatic Bookmark Updater) identifier appended as a query parameter.
