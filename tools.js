@@ -1,3 +1,7 @@
+// Centralized shared constants
+const activeIcons = { "128": "icons/128blue.png" };
+const inactiveIcons = { "128": "icons/128gray.png" };
+
 const Get = {
 	/**
 	 * Gets an element by its ID.
@@ -272,4 +276,4 @@ function normalizeContentUrl(url, title, storage) {
 	return output;
 }
 
-export { createABURL, setNotification, resolveUrlPath, normalizeContentUrl, Get };
+export { createABURL, setNotification, resolveUrlPath, normalizeContentUrl, Get, activeIcons, inactiveIcons };

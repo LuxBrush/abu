@@ -1,8 +1,5 @@
-import { createABURL, Get, resolveUrlPath, normalizeContentUrl, setNotification } from "./tools.js";
-//Icons
-const activeIcons = { "128": "icons/128blue.png" };
-const inactiveIcons = { "128": "icons/128gray.png" };
-const ABUVersion = 1.4;
+import { createABURL, Get, resolveUrlPath, normalizeContentUrl, setNotification, activeIcons, inactiveIcons } from "./tools.js";
+const ABUVersion = chrome.runtime.getManifest().version;
 
 //Call the variables here
 let url = "";
@@ -16,11 +13,11 @@ let warning = "";
 
 function createPage() {
 	chrome.storage.sync.get(function (/** @type {StorageObject} */ storage) {
-		//ABUVersion info
-		if (!storage.ABUVersion || storage.ABUVersion < ABUVersion) {
+		// ABUVersion info (compare by equality to avoid numeric/string issues)
+		if (storage.ABUVersion !== ABUVersion) {
 			const updateElement = document.createElement("p");
 			updateElement.id = "update";
-			updateElement.textContent = "ABU 1.4 adds support for mangahub.io. Always feel free to let me know if ABU doesn't work on any website!";
+			updateElement.textContent = `ABU updated to v${ABUVersion}. If anything breaks, please let me know!`;
 			document.getElementsByTagName("BODY")[0].prepend(updateElement);
 			chrome.storage.sync.set({ "ABUVersion": ABUVersion });
 		}
@@ -42,7 +39,6 @@ function createPage() {
 				warning += "ABUkmark a subpage if possible so visiting about, archives, links, etc doesn't update bookmarks. Just click on an article, a back button, or a button to start reading and it should be perfect!<br>";
 		}
 
-		let anywhereButtonsString = "";
 		const anywhereButtonsFragment = document.createDocumentFragment();
 
 		domain = resolveUrlPath(storage, domain);
@@ -277,11 +273,10 @@ function createPage() {
 			button.appendChild(domainText);
 
 			anywhereButtonsFragment.appendChild(button);
-			anywhereButtonsString += `<button data-id="${abuBookmark.ABUid}" data-domain="${key}">&times; <img src="${abuBookmark.favIconUrl}"> ${key}</button>`;
 		}
 
-		//If the user doesn't have any ABUkmarks, don't show the horizontal rule
-		if (anywhereButtonsString == "") {
+		// If the user doesn't have any ABUkmarks, don't show the horizontal rule
+		if (anywhereButtonsFragment.childNodes.length === 0) {
 			document.getElementsByTagName("hr")[0].classList.add("hidden");
 		}
 
@@ -297,7 +292,6 @@ function createPage() {
 		anywhereDiv.appendChild(anywhereButtonsFragment);
 
 		let anywhereButtons = /** @type {HTMLCollectionOf<HTMLButtonElement>} */ (anywhereDiv.children);
-		let images = document.getElementsByTagName("img");
 
 		// Add functions for each button
 		for (let ii = 0; ii < anywhereButtons.length; ii++) {
@@ -312,11 +306,13 @@ function createPage() {
 				unABU(domainPath, Number(abuId));
 			};
 
-			//Hide any images that fail to load properly
-			const image = images[ii];
-			image.onerror = () => {
-				image.classList.add("hidden-image");
-			};
+			// Hide any images that fail to load properly
+			const image = anywhereButton.querySelector("img");
+			if (image) {
+				image.onerror = () => {
+					image.classList.add("hidden");
+				};
+			}
 		}
 	});
 }

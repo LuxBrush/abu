@@ -1,7 +1,4 @@
-import { createABURL, normalizeContentUrl, resolveUrlPath } from "./tools.js";
-//Icons
-const activeIcons = { "128": "icons/128blue.png" };
-const inactiveIcons = { "128": "icons/128gray.png" };
+import { createABURL, normalizeContentUrl, resolveUrlPath, activeIcons, inactiveIcons } from "./tools.js";
 
 //Any changes to the URL call this- even a querystring change
 chrome.tabs.onUpdated.addListener(function (_tabId, changeInfo, updatedTab) {
