@@ -511,18 +511,16 @@ function createPage(mainButton) {
 
 					//If a bookmark in the list doesn't exist
 					if (thisBookmark3.length === 0) {
-						let ABUid = storage[bookmarks[i]]["ABUid"];
+						const ABUid = storage[bookmarks[i]]["ABUid"];
+						const ABUButton = document.querySelector(
+							'button[data-id="' + ABUid + '"]'
+						);
 
 						//Remove the info
 						chrome.storage.sync.remove(bookmarks[i]);
 
 						//Remove the element, if it exists
-						if (
-							(ABUid = document.querySelector(
-								'button[data-id="' + ABUid + '"]'
-							))
-						)
-							ABUid.remove();
+						if (ABUButton) ABUButton.remove();
 					}
 				}
 			);
