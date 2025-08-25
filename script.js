@@ -28,16 +28,19 @@ console.log(
  */
 function getWebpage(inputUrl, title, storage) {
 	//Ignore the last section of the URL every time
-
-	//console.log(input);
+	let output = "";
 
 	//Get everything up until 1) a numbered section (past the domain) or 2) a querystring
-	output = /(\S+\/\/+[^\/]+[^\d\?]+\/)+(?!$)/.exec(inputUrl);
-	//console.log(output);
+	const matches = inputUrl.match(/(\S+\/\/+[^/]+[^\d?]+\/)+(?!$)/);
+	if (!matches) {
+		console.error("Unable to extract domain/path from URL: ", inputUrl);
+		return "";
+	}
+	output = matches[0];
 
 	//Remove http (and www too, if it's present)
-	if (output) output = output[0].replace(/[^\/]+\/\/(www.)?/, "");
-	else output = inputUrl.replace(/[^\/]+\/\/(www.)?/, "");
+	if (output !== "") output = output.replace(/[^/]+\/\/(www.)?/, "");
+	else output = inputUrl.replace(/[^/]+\/\/(www.)?/, "");
 
 	//console.log(input,output);
 
