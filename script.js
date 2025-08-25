@@ -29,7 +29,7 @@ function getWebpage(url, title, storage) {
 	// Check if URL starts with http or https
 	if (url.startsWith("http://") || url.startsWith("https://")) {
 		//Get everything up until 1) a numbered section (past the domain) or 2) a querystring
-		const match = /(\S+\/\/+[^\/]+[^\d\?]+\/)+(?!$)/.exec(url);
+		const match = /(\S+\/\/+[^/]+[^\d?]+\/)+(?!$)/.exec(url);
 		if (!match) {
 			console.error("Invalid URL format: unable to extract domain pattern");
 			return "";
@@ -37,8 +37,8 @@ function getWebpage(url, title, storage) {
 		let output = match[0];
 
 		//Remove http (and www too, if it's present)
-		if (output) output = output.replace(/[^\/]+\/\/(www.)?/, "");
-		else output = url.replace(/[^\/]+\/\/(www.)?/, "");
+		if (output) output = output.replace(/[^/]+\/\/(www.)?/, "");
+		else output = url.replace(/[^/]+\/\/(www.)?/, "");
 
 		//console.log(input,output);
 
@@ -112,6 +112,8 @@ function getWebpage(url, title, storage) {
 		}
 
 		return output;
+	} else {
+		return "";
 	}
 }
 
@@ -165,7 +167,7 @@ chrome.tabs.onUpdated.addListener(function (_tabId, changeInfo, updatedTab) {
 			console.error("Tab URL is undefined or null");
 			return;
 		}
-		var newURL = updatedTab.url.replace(/(\?|\&)ABUid.*/, "");
+		var newURL = updatedTab.url.replace(/(\?|&)ABUid.*/, "");
 
 		//If the URL had an ABUid, remove it
 		if (newURL !== updatedTab.url) {
