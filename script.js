@@ -22,7 +22,6 @@ console.log(
  * @param {string} url - Input url
  * @param {string} title - Title of webpage
  * @param {*} storage
- * @returns {string}
  */
 function getWebpage(url, title, storage) {
 	//Ignore the last section of the URL every time
@@ -48,7 +47,6 @@ function getWebpage(url, title, storage) {
 			/blog/
 			/comic/
 		*/
-
 		const keywordCheck = /.+\/(blog|comic)\//.exec(output);
 		if (keywordCheck) output = keywordCheck[0];
 
@@ -56,7 +54,7 @@ function getWebpage(url, title, storage) {
 		var indicativeCheck = /.+\/(?=season-|ep-|episode-|page-|p-)/.exec(output);
 		if (indicativeCheck) output = indicativeCheck[0];
 
-		/////////ODD-URL WEBSITES COMPATABILITY/////////
+		/////////ODD-URL WEBSITES COMPATIBILITY/////////
 		let oddURL = null;
 
 		//WEBTOONS// webtoons.com/language/genre/name/
@@ -70,7 +68,7 @@ function getWebpage(url, title, storage) {
 
 		if (oddURL) output = oddURL[0];
 
-		/////////SPECIAL WEBSITE COMPATABILITY/////////
+		/////////SPECIAL WEBSITE COMPATIBILITY/////////
 		var special = null;
 
 		//TAPAS// tapas.io/episode/ (same for every comic; we have to test by title)
@@ -112,7 +110,6 @@ function getWebpage(url, title, storage) {
 				output = special;
 			}
 		}
-
 
 		return output;
 	}
