@@ -4,7 +4,7 @@ const inactiveIcons = { 128: "icons/128gray.png" };
 const ABUVersion = 1.4;
 
 //Call the variables here
-let url = "";
+let scriptURL = "";
 let domain = "";
 let title = "";
 let favIconUrl = "";
@@ -19,17 +19,17 @@ console.log(
 //Get the webpage to save the ABUkmark to
 /**
  *
- * @param {string} url - Input url
+ * @param {string} inputURL - Input url
  * @param {string} title - Title of webpage
  * @param {ABUStorage} storage
  */
-function getWebpage(url, title, storage) {
+function getWebpage(inputURL, title, storage) {
 	//Ignore the last section of the URL every time
 
 	// Check if URL starts with http or https
-	if (url.startsWith("http://") || url.startsWith("https://")) {
+	if (inputURL.startsWith("http://") || inputURL.startsWith("https://")) {
 		//Get everything up until 1) a numbered section (past the domain) or 2) a querystring
-		const match = /(\S+\/\/+[^/]+[^\d?]+\/)+(?!$)/.exec(url);
+		const match = /(\S+\/\/+[^/]+[^\d?]+\/)+(?!$)/.exec(inputURL);
 		if (!match) {
 			console.error("Invalid URL format: unable to extract domain pattern");
 			return "";
@@ -38,7 +38,7 @@ function getWebpage(url, title, storage) {
 
 		//Remove http (and www too, if it's present)
 		if (output) output = output.replace(/[^/]+\/\/(www.)?/, "");
-		else output = url.replace(/[^/]+\/\/(www.)?/, "");
+		else output = inputURL.replace(/[^/]+\/\/(www.)?/, "");
 
 		//console.log(input,output);
 
@@ -58,13 +58,13 @@ function getWebpage(url, title, storage) {
 		let oddURL = null;
 
 		//WEBTOONS// webtoons.com/language/genre/name/
-		if (!oddURL) oddURL = /webtoons.com\/[^/]+\/[^/]+\/[^/]+\//.exec(url);
+		if (!oddURL) oddURL = /webtoons.com\/[^/]+\/[^/]+\/[^/]+\//.exec(inputURL);
 
 		//LEZHIM// lezhin.com/language/comic/title
-		if (!oddURL) oddURL = /lezhin.com\/[^/]+\/comic\/[^/]+\//.exec(url);
+		if (!oddURL) oddURL = /lezhin.com\/[^/]+\/comic\/[^/]+\//.exec(inputURL);
 
 		//MANGAHUB.IO// mangahub.com/chapter/title
-		if (!oddURL) oddURL = /mangahub.io\/chapter\/[^/]+\//.exec(url);
+		if (!oddURL) oddURL = /mangahub.io\/chapter\/[^/]+\//.exec(inputURL);
 
 		if (oddURL) output = oddURL[0];
 
@@ -73,7 +73,7 @@ function getWebpage(url, title, storage) {
 
 		//TAPAS// tapas.io/episode/ (same for every comic; we have to test by title)
 		//console.log(input);
-		if (/tapas.io\/(series|episode)\//.test(url) && title) {
+		if (/tapas.io\/(series|episode)\//.test(inputURL) && title) {
 			//Either get the title if separated by :: or by |
 			const match = /.+(?=\s::)/.exec(title) || /.+(?=\s\|)/.exec(title);
 			//After get one, get the first item:
@@ -84,20 +84,20 @@ function getWebpage(url, title, storage) {
 		}
 
 		//YOUTUBE PLAYLIST// https://www.youtube.com/playlist?list=id
-		if (/youtube.com\/.+list=/.test(url)) {
+		if (/youtube.com\/.+list=/.test(inputURL)) {
 			//Get the playlist id
-			const match = /(?:\?|&)list=[^?&]*/.exec(url);
+			const match = /(?:\?|&)list=[^?&]*/.exec(inputURL);
 			if (match) special = match[0];
-		} else if (/youtube.com\/watch\?v=[^?&]*/.test(url)) {
+		} else if (/youtube.com\/watch\?v=[^?&]*/.test(inputURL)) {
 			//Get the video id and track time
-			const match = /(?:\?|&)v=[^?&]*/.exec(url);
+			const match = /(?:\?|&)v=[^?&]*/.exec(inputURL);
 			if (match) special = match[0];
 		}
 
 		//GOOGLE SHEETS PRESENTATION// https://docs.google.com/presentation/d/slideshow_id/relevant_stuff
-		if (/docs.google.com\/presentation\/d\/.+\//.test(url)) {
+		if (/docs.google.com\/presentation\/d\/.+\//.test(inputURL)) {
 			//Get the slideshow url
-			const match = /docs.google.com\/presentation\/d\/.+\//.exec(url);
+			const match = /docs.google.com\/presentation\/d\/.+\//.exec(inputURL);
 			if (match) special = match[0];
 		}
 
@@ -329,17 +329,17 @@ function createPage(mainButton) {
 
 		mainButton.dataset.multiple = "0";
 
-		console.log("url is", url);
+		console.log("url is", scriptURL);
 
 		//If we're on the homepage, warn the user that subpages are better
 		if (
 			// If all of these are true, the user's on a homepage
 			(domain.indexOf("/") !== -1 &&
 				domain.substr(0, domain.length - 2).indexOf("/") == -1 &&
-				!/(page|p|date)=/i.test(url) &&
-				!/tapas.io\/(series|episode)\//.test(url)) ||
+				!/(page|p|date)=/i.test(scriptURL) &&
+				!/tapas.io\/(series|episode)\//.test(scriptURL)) ||
 			// If any of these are true, the user's on a homepage
-			/mangahub.io\/manga\//.test(url)
+			/mangahub.io\/manga\//.test(scriptURL)
 		) {
 			if (warning.indexOf("a subpage if") === -1)
 				warning +=
@@ -597,11 +597,11 @@ function overwriteWarning(bookmark, warningClass) {
 
 /**
  *
- * @param {string} url
+ * @param {string} inputURL
  * @param {boolean} mustMakeNew
  * @param {HTMLButtonElement} mainButton
  */
-function ABU(url, mustMakeNew, mainButton) {
+function ABU(inputURL, mustMakeNew, mainButton) {
 	let inArray = 0;
 	let inArrayDomain = "";
 
@@ -622,7 +622,7 @@ function ABU(url, mustMakeNew, mainButton) {
 		}
 	}
 
-	chrome.bookmarks.search(url, function (thisBookmark) {
+	chrome.bookmarks.search(inputURL, function (thisBookmark) {
 		if (!thisBookmark[inArray] || mustMakeNew) {
 			//If the bookmark doesn't exist
 
@@ -631,11 +631,11 @@ function ABU(url, mustMakeNew, mainButton) {
 				if (!thisFolder[0]) {
 					//If folder ABUkmarks doesn't exist
 					chrome.bookmarks.create({ title: "ABUkmarks" }, function (newFolder) {
-						createABUkmark(url, newFolder.id);
+						createABUkmark(inputURL, newFolder.id);
 					});
 				} else {
 					//If the folder exists
-					createABUkmark(url, thisFolder[0].id);
+					createABUkmark(inputURL, thisFolder[0].id);
 				}
 				//Not always located there; get exact location and state it
 				setNotification(
@@ -652,11 +652,11 @@ function ABU(url, mustMakeNew, mainButton) {
 
 			var ABUid = Date.now();
 
-			storeObj(url, ABUid, mainButton);
+			storeObj(inputURL, ABUid, mainButton);
 
 			chrome.bookmarks.update(thisBookmark[inArray].id, {
 				title: title + " (ABU)",
-				url: createABURL(url, ABUid),
+				url: createABURL(scriptURL, ABUid),
 			});
 
 			setNotification("", mainButton);
@@ -669,19 +669,19 @@ function ABU(url, mustMakeNew, mainButton) {
 //Create a new bookmark to be an ABUkmark
 /**
  *
- * @param {string} url
+ * @param {string} inputURL
  * @param {string} parentId
  */
-function createABUkmark(url, parentId) {
+function createABUkmark(inputURL, parentId) {
 	const ABUid = Date.now();
 	chrome.bookmarks.create(
 		{
 			parentId: parentId,
 			title: title + " (ABU)",
-			url: createABURL(url, ABUid),
+			url: createABURL(scriptURL, ABUid),
 		},
 		function (newBookmark) {
-			storeObj(url, ABUid, getMainButton());
+			storeObj(inputURL, ABUid, getMainButton());
 		}
 	);
 }
@@ -802,8 +802,8 @@ if (document.getElementById("current-page")) {
 				console.error("Tab URL, title, or favicon URL is undefined or null");
 				return;
 			}
-			url = tab.url;
-			domain = getWebpage(url, tab.title, storage);
+			scriptURL = tab.url;
+			domain = getWebpage(scriptURL, tab.title, storage);
 			title = tab.title;
 			favIconUrl = tab.favIconUrl;
 
