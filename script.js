@@ -21,7 +21,7 @@ console.log(
  *
  * @param {string} url - Input url
  * @param {string} title - Title of webpage
- * @param {*} storage
+ * @param {ABUStorage} storage
  */
 function getWebpage(url, title, storage) {
 	//Ignore the last section of the URL every time
@@ -119,7 +119,7 @@ function getWebpage(url, title, storage) {
 
 /**
  *
- * @param {*} storage
+ * @param {ABUStorage} storage
  * @param {string} testURL
  * @returns {string}
  */
@@ -240,9 +240,7 @@ function updateTabInfo(thisTab) {
 		});
 	}
 
-	chrome.storage.sync.get(function (
-		/** @type {{ [x: string]: { [x: string]: any; }; }} */ storage
-	) {
+	chrome.storage.sync.get(function (/** @type {ABUStorage} */ storage) {
 		//NOT DONE YET: If the page is part of a higher domain that we ARE keeping track of but we don't have a direct domain for this one, let's go up some levels:
 		if (!thisTab.url || !thisTab.title) {
 			console.error("Tab URL or title is undefined or null");
@@ -317,7 +315,7 @@ function updateTabInfo(thisTab) {
  * @param {HTMLButtonElement} mainButton
  */
 function createPage(mainButton) {
-	chrome.storage.sync.get(function (/** @type {*}} */ storage) {
+	chrome.storage.sync.get(function (/** @type {ABUStorage}} */ storage) {
 		//ABUVersion info
 		if (!storage["ABUVersion"] || storage["ABUVersion"] < ABUVersion) {
 			document
@@ -735,10 +733,10 @@ function setNotification(input, mainButton) {
  * @param {HTMLButtonElement} mainButton
  */
 function storeObj(ABUURL, bookmarkId, mainButton) {
-	/** @type {Object<string, {ABUid: number, favIconUrl: string}>} */
-	const ABUStorage = {};
-	ABUStorage[ABUURL] = { ABUid: bookmarkId, favIconUrl: favIconUrl };
-	chrome.storage.sync.set(ABUStorage);
+	/** @type {ABUStorage} */
+	const storageUpdate = {};
+	storageUpdate[ABUURL] = { ABUid: bookmarkId, favIconUrl: favIconUrl };
+	chrome.storage.sync.set(storageUpdate);
 	createPage(mainButton);
 }
 
@@ -800,7 +798,7 @@ if (document.getElementById("current-page")) {
 	chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
 		//console.log(tabs);
 		//Need to get storage here, for getting the webpage
-		chrome.storage.sync.get(function (/** @type {any} */ storage) {
+		chrome.storage.sync.get(function (/** @type {ABUStorage} */ storage) {
 			const tab = tabs[0];
 			if (!tab.url || !tab.title || !tab.favIconUrl) {
 				console.error("Tab URL, title, or favicon URL is undefined or null");
