@@ -42,14 +42,12 @@ function getWebpage(inputUrl, title, storage) {
 	if (output !== "") output = output.replace(/[^/]+\/\/(www.)?/, "");
 	else output = inputUrl.replace(/[^/]+\/\/(www.)?/, "");
 
-	//console.log(input,output);
-
 	//Check for special key folders; go up to those
 	/*
 		/blog/
 		/comic/
 	*/
-	var keywordCheck = /.+\/(blog|comic)\//.exec(output);
+	const keywordCheck = output.match(/.+\/(blog|comic)\//);
 	if (keywordCheck) output = keywordCheck[0];
 
 	//Check for indicative keywords; go up to those
@@ -57,21 +55,18 @@ function getWebpage(inputUrl, title, storage) {
 	if (indicativeCheck) output = indicativeCheck[0];
 
 	/////////ODD-URL WEBSITES COMPATABILITY/////////
-	var keywordCheck = null;
+	var oddUrl = null;
 
 	//WEBTOONS// webtoons.com/language/genre/name/
-	if (!keywordCheck)
-		keywordCheck = /webtoons.com\/[^/]+\/[^/]+\/[^/]+\//.exec(inputUrl);
+	if (!oddUrl) oddUrl = inputUrl.match(/webtoons.com\/[^/]+\/[^/]+\/[^/]+\//);
 
 	//LEZHIM// lezhin.com/language/comic/title
-	if (!keywordCheck)
-		keywordCheck = /lezhin.com\/[^/]+\/comic\/[^/]+\//.exec(inputUrl);
+	if (!oddUrl) oddUrl = inputUrl.match(/lezhin.com\/[^/]+\/comic\/[^/]+\//);
 
 	//MANGAHUB.IO// mangahub.com/chapter/title
-	if (!keywordCheck)
-		keywordCheck = /mangahub.io\/chapter\/[^/]+\//.exec(inputUrl);
+	if (!oddUrl) oddUrl = inputUrl.match(/mangahub.io\/chapter\/[^/]+\//);
 
-	if (keywordCheck) output = keywordCheck[0];
+	if (oddUrl) output = oddUrl[0];
 
 	/////////SPECIAL WEBSITE COMPATABILITY/////////
 	var special = null;
