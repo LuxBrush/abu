@@ -19,19 +19,25 @@ console.log(
 	"May get an error: Unchecked runtime.lastError: The tab was closed. The code should keep running, but there's no way to check for if a tab exists; only to hide the error. I opted for just letting it be. :P"
 );
 
-//Get the webpage to save the ABUkmark to
-function getWebpage(input, title, storage) {
+/**
+ * Get the webpage domain/path to save the ABUkmark to
+ * @param {string} inputUrl - The URL of the current tab
+ * @param {string} title - The title of the current tab
+ * @param {ABUStorage} storage - The extension's storage object
+ * @returns {string} The normalized domain/path or special token to use as a scope key
+ */
+function getWebpage(inputUrl, title, storage) {
 	//Ignore the last section of the URL every time
 
 	//console.log(input);
 
 	//Get everything up until 1) a numbered section (past the domain) or 2) a querystring
-	output = /(\S+\/\/+[^\/]+[^\d\?]+\/)+(?!$)/.exec(input);
+	output = /(\S+\/\/+[^\/]+[^\d\?]+\/)+(?!$)/.exec(inputUrl);
 	//console.log(output);
 
 	//Remove http (and www too, if it's present)
 	if (output) output = output[0].replace(/[^\/]+\/\/(www.)?/, "");
-	else output = input.replace(/[^\/]+\/\/(www.)?/, "");
+	else output = inputUrl.replace(/[^\/]+\/\/(www.)?/, "");
 
 	//console.log(input,output);
 
@@ -52,14 +58,15 @@ function getWebpage(input, title, storage) {
 
 	//WEBTOONS// webtoons.com/language/genre/name/
 	if (!keywordCheck)
-		keywordCheck = /webtoons.com\/[^/]+\/[^/]+\/[^/]+\//.exec(input);
+		keywordCheck = /webtoons.com\/[^/]+\/[^/]+\/[^/]+\//.exec(inputUrl);
 
 	//LEZHIM// lezhin.com/language/comic/title
 	if (!keywordCheck)
-		keywordCheck = /lezhin.com\/[^/]+\/comic\/[^/]+\//.exec(input);
+		keywordCheck = /lezhin.com\/[^/]+\/comic\/[^/]+\//.exec(inputUrl);
 
 	//MANGAHUB.IO// mangahub.com/chapter/title
-	if (!keywordCheck) keywordCheck = /mangahub.io\/chapter\/[^/]+\//.exec(input);
+	if (!keywordCheck)
+		keywordCheck = /mangahub.io\/chapter\/[^/]+\//.exec(inputUrl);
 
 	if (keywordCheck) output = keywordCheck[0];
 
@@ -68,7 +75,7 @@ function getWebpage(input, title, storage) {
 
 	//TAPAS// tapas.io/episode/ (same for every comic; we have to test by title)
 	//console.log(input);
-	if (/tapas.io\/(series|episode)\//.test(input) && title) {
+	if (/tapas.io\/(series|episode)\//.test(inputUrl) && title) {
 		//Either get the title if separated by :: or by |
 		special = /.+(?=\s::)/.exec(title) || /.+(?=\s\|)/.exec(title);
 		//After get one, get the first item:
@@ -79,18 +86,18 @@ function getWebpage(input, title, storage) {
 	}
 
 	//YOUTUBE PLAYLIST// https://www.youtube.com/playlist?list=id
-	if (/youtube.com\/.+list=/.test(input)) {
+	if (/youtube.com\/.+list=/.test(inputUrl)) {
 		//Get the playlist id
-		special = /(?:\?|&)list=[^?&]*/.exec(input)[0];
-	} else if (/youtube.com\/watch\?v=[^?&]*/.test(input)) {
+		special = /(?:\?|&)list=[^?&]*/.exec(inputUrl)[0];
+	} else if (/youtube.com\/watch\?v=[^?&]*/.test(inputUrl)) {
 		//Get the video id and track time
-		special = /(?:\?|&)v=[^?&]*/.exec(input)[0];
+		special = /(?:\?|&)v=[^?&]*/.exec(inputUrl)[0];
 	}
 
 	//GOOGLE SHEETS PRESENTATION// https://docs.google.com/presentation/d/slideshow_id/relevant_stuff
-	if (/docs.google.com\/presentation\/d\/.+\//.test(input)) {
+	if (/docs.google.com\/presentation\/d\/.+\//.test(inputUrl)) {
 		//Get the slideshow url
-		special = /docs.google.com\/presentation\/d\/.+\//.exec(input)[0];
+		special = /docs.google.com\/presentation\/d\/.+\//.exec(inputUrl)[0];
 	}
 
 	//console.log(special);
