@@ -31,12 +31,12 @@ function getWebpage(inputUrl, title, storage) {
 	let output = "";
 
 	//Get everything up until 1) a numbered section (past the domain) or 2) a querystring
-	const matches = inputUrl.match(/(\S+\/\/+[^/]+[^\d?]+\/)+(?!$)/);
-	if (!matches) {
+	const domainPath = inputUrl.match(/(\S+\/\/+[^/]+[^\d?]+\/)+(?!$)/);
+	if (!domainPath) {
 		console.error("Unable to extract domain/path from URL: ", inputUrl);
 		return "";
 	}
-	output = matches[0];
+	output = domainPath[0];
 
 	//Remove http (and www too, if it's present)
 	if (output !== "") output = output.replace(/[^/]+\/\/(www.)?/, "");
@@ -51,11 +51,11 @@ function getWebpage(inputUrl, title, storage) {
 	if (keywordCheck) output = keywordCheck[0];
 
 	//Check for indicative keywords; go up to those
-	var indicativeCheck = /.+\/(?=season-|ep-|episode-|page-|p-)/.exec(output);
+	const indicativeCheck = output.match(/.+\/(?=season-|ep-|episode-|page-|p-)/);
 	if (indicativeCheck) output = indicativeCheck[0];
 
 	/////////ODD-URL WEBSITES COMPATABILITY/////////
-	var oddUrl = null;
+	let oddUrl = null;
 
 	//WEBTOONS// webtoons.com/language/genre/name/
 	if (!oddUrl) oddUrl = inputUrl.match(/webtoons.com\/[^/]+\/[^/]+\/[^/]+\//);
@@ -69,13 +69,17 @@ function getWebpage(inputUrl, title, storage) {
 	if (oddUrl) output = oddUrl[0];
 
 	/////////SPECIAL WEBSITE COMPATABILITY/////////
-	var special = null;
+	let special = null;
 
 	//TAPAS// tapas.io/episode/ (same for every comic; we have to test by title)
 	//console.log(input);
 	if (/tapas.io\/(series|episode)\//.test(inputUrl) && title) {
 		//Either get the title if separated by :: or by |
 		special = /.+(?=\s::)/.exec(title) || /.+(?=\s\|)/.exec(title);
+		if (!special) {
+			console.error("Unable to extract title from Tapas page");
+			return "";
+		}
 		//After get one, get the first item:
 		special = special[0];
 
@@ -86,19 +90,20 @@ function getWebpage(inputUrl, title, storage) {
 	//YOUTUBE PLAYLIST// https://www.youtube.com/playlist?list=id
 	if (/youtube.com\/.+list=/.test(inputUrl)) {
 		//Get the playlist id
-		special = /(?:\?|&)list=[^?&]*/.exec(inputUrl)[0];
+		const match = /(?:\?|&)list=[^?&]*/.exec(inputUrl);
+		if (match) special = match[0];
 	} else if (/youtube.com\/watch\?v=[^?&]*/.test(inputUrl)) {
 		//Get the video id and track time
-		special = /(?:\?|&)v=[^?&]*/.exec(inputUrl)[0];
+		const match = /(?:\?|&)v=[^?&]*/.exec(inputUrl);
+		if (match) special = match[0];
 	}
 
 	//GOOGLE SHEETS PRESENTATION// https://docs.google.com/presentation/d/slideshow_id/relevant_stuff
 	if (/docs.google.com\/presentation\/d\/.+\//.test(inputUrl)) {
 		//Get the slideshow url
-		special = /docs.google.com\/presentation\/d\/.+\//.exec(inputUrl)[0];
+		const match = /docs.google.com\/presentation\/d\/.+\//.exec(inputUrl);
+		if (match) special = match[0];
 	}
-
-	//console.log(special);
 
 	//If a special, unusual value was passed:
 	if (special) {
@@ -107,8 +112,6 @@ function getWebpage(inputUrl, title, storage) {
 			output = special;
 		}
 	}
-
-	//console.log(output);
 
 	return output;
 }
