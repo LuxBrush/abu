@@ -75,7 +75,7 @@ function getWebpage(inputUrl, title, storage) {
 	//console.log(input);
 	if (/tapas.io\/(series|episode)\//.test(inputUrl) && title) {
 		//Either get the title if separated by :: or by |
-		special = /.+(?=\s::)/.exec(title) || /.+(?=\s\|)/.exec(title);
+		special = title.match(/.+(?=\s::)/) || title.match(/.+(?=\s\|)/);
 		if (!special) {
 			console.error("Unable to extract title from Tapas page");
 			return "";
@@ -90,18 +90,18 @@ function getWebpage(inputUrl, title, storage) {
 	//YOUTUBE PLAYLIST// https://www.youtube.com/playlist?list=id
 	if (/youtube.com\/.+list=/.test(inputUrl)) {
 		//Get the playlist id
-		const match = /(?:\?|&)list=[^?&]*/.exec(inputUrl);
+		const match = inputUrl.match(/(?:\?|&)list=[^?&]*/);
 		if (match) special = match[0];
 	} else if (/youtube.com\/watch\?v=[^?&]*/.test(inputUrl)) {
 		//Get the video id and track time
-		const match = /(?:\?|&)v=[^?&]*/.exec(inputUrl);
+		const match = inputUrl.match(/(?:\?|&)v=[^?&]*/);
 		if (match) special = match[0];
 	}
 
 	//GOOGLE SHEETS PRESENTATION// https://docs.google.com/presentation/d/slideshow_id/relevant_stuff
 	if (/docs.google.com\/presentation\/d\/.+\//.test(inputUrl)) {
 		//Get the slideshow url
-		const match = /docs.google.com\/presentation\/d\/.+\//.exec(inputUrl);
+		const match = inputUrl.match(/docs.google.com\/presentation\/d\/.+\//);
 		if (match) special = match[0];
 	}
 
