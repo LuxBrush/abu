@@ -153,11 +153,12 @@ function checkLevels(storage, urlOrTitle) {
 }
 
 //Any changes to the URL call this- even a querystring change
-chrome.tabs.onUpdated.addListener(function (tabId, changeInfo, updatedTab) {
+chrome.tabs.onUpdated.addListener(function (_tabId, changeInfo, updatedTab) {
 	//Check for ABUids on loading (we don't want to wait until it finishes loading to check, in some cases that could take a while or the ABUid could break PHP or other web code)
 	if (changeInfo.status == "loading") {
 		//Save the URL without an ABUid
-		var newURL = updatedTab.url.replace(/(\?|\&)ABUid.*/, "");
+		if (!updatedTab.url) return;
+		var newURL = updatedTab.url.replace(/(\?|&)ABUid.*/, "");
 
 		//If the URL had an ABUid, remove it
 		if (newURL !== updatedTab.url) {
@@ -166,10 +167,6 @@ chrome.tabs.onUpdated.addListener(function (tabId, changeInfo, updatedTab) {
 				code: "location.replace('" + newURL + "');",
 				runAt: "document_start",
 			});
-
-			//history.replaceState({},'',newURL);
-			//location.reload();
-			//chrome.tabs.update(tabId,{url:newURL});
 		}
 	}
 
