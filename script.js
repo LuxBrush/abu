@@ -24,23 +24,22 @@ console.log(
  * @param {string} inputUrl - The URL of the current tab
  * @param {string} title - The title of the current tab
  * @param {ABUStorage} storage - The extension's storage object
- * @returns {string} The normalized domain/path or special token to use as a scope key
+ * @returns {string | null} The normalized domain/path or special token to use as a scope key
  */
 function getWebpage(inputUrl, title, storage) {
+	// Check if inputUrl is an http or https URL
+	if (!/^https?:\/\//.test(inputUrl)) {
+		return null;
+	}
 	//Ignore the last section of the URL every time
 	let output = "";
 
 	//Get everything up until 1) a numbered section (past the domain) or 2) a querystring
 	const domainPath = inputUrl.match(/(\S+\/\/+[^/]+[^\d?]+\/)+(?!$)/);
-	if (!domainPath) {
-		console.error("Unable to extract domain/path from URL: ", inputUrl);
-		return "";
-	}
-	output = domainPath[0];
+	if (domainPath) output = domainPath[0];
 
 	//Remove http (and www too, if it's present)
-	if (output !== "") output = output.replace(/[^/]+\/\/(www.)?/, "");
-	else output = inputUrl.replace(/[^/]+\/\/(www.)?/, "");
+	output = output.replace(/[^/]+\/\/(www.)?/, "");
 
 	//Check for special key folders; go up to those
 	/*
@@ -54,18 +53,11 @@ function getWebpage(inputUrl, title, storage) {
 	const indicativeCheck = output.match(/.+\/(?=season-|ep-|episode-|page-|p-)/);
 	if (indicativeCheck) output = indicativeCheck[0];
 
-	/////////ODD-URL WEBSITES COMPATABILITY/////////
-	let oddUrl = null;
-
-	//WEBTOONS// webtoons.com/language/genre/name/
-	if (!oddUrl) oddUrl = inputUrl.match(/webtoons.com\/[^/]+\/[^/]+\/[^/]+\//);
-
-	//LEZHIM// lezhin.com/language/comic/title
-	if (!oddUrl) oddUrl = inputUrl.match(/lezhin.com\/[^/]+\/comic\/[^/]+\//);
-
-	//MANGAHUB.IO// mangahub.com/chapter/title
-	if (!oddUrl) oddUrl = inputUrl.match(/mangahub.io\/chapter\/[^/]+\//);
-
+	/////////ODD-URL WEBSITES COMPATIBILITY/////////
+	// Single-pass match for known odd patterns
+	const oddUrl = inputUrl.match(
+		/(?:webtoons\.com\/[^/]+\/[^/]+\/[^/]+\/|lezhin\.com\/[^/]+\/comic\/[^/]+\/|mangahub\.io\/chapter\/[^/]+\/)/
+	);
 	if (oddUrl) output = oddUrl[0];
 
 	/////////SPECIAL WEBSITE COMPATABILITY/////////
@@ -78,7 +70,7 @@ function getWebpage(inputUrl, title, storage) {
 		special = title.match(/.+(?=\s::)/) || title.match(/.+(?=\s\|)/);
 		if (!special) {
 			console.error("Unable to extract title from Tapas page");
-			return "";
+			return null;
 		}
 		//After get one, get the first item:
 		special = special[0];
@@ -91,18 +83,30 @@ function getWebpage(inputUrl, title, storage) {
 	if (/youtube.com\/.+list=/.test(inputUrl)) {
 		//Get the playlist id
 		const match = inputUrl.match(/(?:\?|&)list=[^?&]*/);
-		if (match) special = match[0];
+		if (!match) {
+			console.error("Unable to extract playlist id from YouTube page");
+			return null;
+		}
+		special = match[0];
 	} else if (/youtube.com\/watch\?v=[^?&]*/.test(inputUrl)) {
 		//Get the video id and track time
 		const match = inputUrl.match(/(?:\?|&)v=[^?&]*/);
-		if (match) special = match[0];
+		if (!match) {
+			console.error("Unable to extract video id from YouTube page");
+			return null;
+		}
+		special = match[0];
 	}
 
 	//GOOGLE SHEETS PRESENTATION// https://docs.google.com/presentation/d/slideshow_id/relevant_stuff
 	if (/docs.google.com\/presentation\/d\/.+\//.test(inputUrl)) {
 		//Get the slideshow url
 		const match = inputUrl.match(/docs.google.com\/presentation\/d\/.+\//);
-		if (match) special = match[0];
+		if (!match) {
+			console.error("Unable to extract slideshow url from Google Sheets page");
+			return null;
+		}
+		special = match[0];
 	}
 
 	//If a special, unusual value was passed:
@@ -116,24 +120,25 @@ function getWebpage(inputUrl, title, storage) {
 	return output;
 }
 
-function checkLevels(object, input) {
-	//console.log("Looking for higher level...",object,input);
-
-	var test = input,
-		output = input;
+/**
+ * Checks for higher level ABUkmarks
+ * @param {ABUStorage} storage The extension's storage object
+ * @param {string} urlOrTitle The URL or title to check
+ * @returns {string}
+ */
+function checkLevels(storage, urlOrTitle) {
+	var test = urlOrTitle,
+		output = urlOrTitle;
 
 	//If we're on a special-case website where the title is passed instead of the URL, return with it
-	if (input.indexOf("/") === -1) {
-		//console.log("Returning!");
-		return input;
+	if (urlOrTitle.indexOf("/") === -1) {
+		return urlOrTitle;
 	}
 
 	//Test up to 10 times for deeper names
 	for (let i = 0; i < 10; i++) {
-		//console.log(object[test]);
-
 		//If it exists, return it
-		if (object[test]) {
+		if (storage[test]) {
 			output = test;
 			break;
 		} //If it doesn't exist, run again
@@ -144,8 +149,6 @@ function checkLevels(object, input) {
 		//If we run 10 times and don't find a new thing, we'll just use the original input
 	}
 
-	//console.log("Putting out "+output);
-
 	return output;
 }
 
@@ -153,15 +156,11 @@ function checkLevels(object, input) {
 chrome.tabs.onUpdated.addListener(function (tabId, changeInfo, updatedTab) {
 	//Check for ABUids on loading (we don't want to wait until it finishes loading to check, in some cases that could take a while or the ABUid could break PHP or other web code)
 	if (changeInfo.status == "loading") {
-		//console.log(updatedTab.url);
-
 		//Save the URL without an ABUid
 		var newURL = updatedTab.url.replace(/(\?|\&)ABUid.*/, "");
 
 		//If the URL had an ABUid, remove it
 		if (newURL !== updatedTab.url) {
-			//console.log("Replace state and stuff");
-
 			//Loads the page without the ABUid
 			chrome.tabs.executeScript(updatedTab.id, {
 				code: "location.replace('" + newURL + "');",
@@ -203,7 +202,6 @@ function updateTabInfo(thisTab) {
 			code: `
 			if(!ABUYT){
 				var ABUYT = setInterval(function(){
-					// console.log('RUNNING INTERVAL');
 					var progressBar = document.getElementsByClassName("ytp-progress-bar");
 					
 					if(!progressBar.length) return;
@@ -221,13 +219,11 @@ function updateTabInfo(thisTab) {
 		});
 	}
 
-	chrome.storage.sync.get(function (storage) {
+	chrome.storage.sync.get(function (/** @type {ABUStorage} */ storage) {
 		//NOT DONE YET: If the page is part of a higher domain that we ARE keeping track of but we don't have a direct domain for this one, let's go up some levels:
-
-		ABUState.domain = checkLevels(
-			storage,
-			getWebpage(thisTab.url, thisTab.title, storage)
-		);
+		const path = getWebpage(thisTab.url, thisTab.title, storage);
+		if (!path) return;
+		ABUState.domain = checkLevels(storage, path);
 
 		// In case this gets changed elsewhere, keep it the same here
 		var localDomain = ABUState.domain;
@@ -348,15 +344,14 @@ function createPage() {
 							ABUState.warningClass = "";
 
 							overwriteWarning(thisBookmark1[i]);
+							const path = getWebpage(
+								thisBookmark1[i].url,
+								thisBookmark1[i].title,
+								storage
+							);
+							if (!path) continue;
 
-							dropdownDomain = checkLevels(
-								storage,
-								getWebpage(
-									thisBookmark1[i].url,
-									thisBookmark1[i].title,
-									storage
-								)
-							); //checkLevels(thisBookmark1[i].url);
+							dropdownDomain = checkLevels(storage, path);
 
 							//console.log(dropdownDomain);
 
@@ -424,27 +419,25 @@ function createPage() {
 					if (!thisBookmark2) {
 						chrome.storage.sync.remove(ABUState.domain);
 					} else {
-						check = false;
+						let check = false;
 						for (let i = 0; i < thisBookmark2.length; i++) {
+							const path = getWebpage(
+								thisBookmark2[i].url,
+								thisBookmark2[i].title,
+								storage
+							);
+							if (!path) continue;
 							if (
 								thisBookmark2[i] &&
-								ABUState.domain ==
-									checkLevels(
-										thisBookmark2,
-										getWebpage(
-											thisBookmark2[i].url,
-											thisBookmark2[i].title,
-											storage
-										)
-									)
+								ABUState.domain == checkLevels(storage, path)
 							) {
-								check = i;
+								check = true;
 							}
 						}
 
 						//GO THROUGH THE FOR LOOP (otherwise won't work with multiple pages and if in a higher-level domain; need to check for that)
 
-						if (thisBookmark2[0] && !isNaN(check)) {
+						if (thisBookmark2[0] && check) {
 							//If we've found out the bookmark claimed to exist does, set the button so that:
 							mainButton.innerHTML = "Revert to normal bookmark";
 							mainButton.style.backgroundColor = "#f00";
@@ -691,9 +684,11 @@ if (document.getElementById("current-page")) {
 	chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
 		//console.log(tabs);
 		//Need to get storage here, for getting the webpage
-		chrome.storage.sync.get(function (storage) {
+		chrome.storage.sync.get(function (/** @type {ABUStorage} */ storage) {
+			const path = getWebpage(tabs[0].url, tabs[0].title, storage);
+			if (!path) return;
 			ABUState.url = tabs[0].url;
-			ABUState.domain = getWebpage(ABUState.url, tabs[0].title, storage);
+			ABUState.domain = path;
 			ABUState.title = tabs[0].title;
 			ABUState.favIconUrl = tabs[0].favIconUrl;
 
