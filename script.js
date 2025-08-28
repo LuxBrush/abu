@@ -591,7 +591,7 @@ function createPage() {
 
 			//Hide any images that fail to load properly
 			image.onerror = function () {
-				this.style = "display:none;";
+				image.style = "display:none;";
 			};
 		}
 	});
