@@ -712,17 +712,26 @@ function createABURL(url, ABUid) {
 	return url + (url.indexOf("?") > -1 ? "&" : "?") + "ABUid=" + ABUid;
 }
 
-function setNotification(input) {
-	document.getElementById("notification").innerHTML = input;
+/**
+ * Update the popup notification UI.
+ * Sets the `#notification` HTML, toggles visibility, and binds
+ * `#onlyNewABU` click (when present) to create a new ABUkmark.
+ * @param {string} inputHTML - HTML to render; empty hides the notification.
+ * @returns {void}
+ */
+function setNotification(inputHTML) {
+	const notification = document.getElementById("notification");
+	if (!notification) return;
+	notification.innerHTML = inputHTML;
 
-	if (document.getElementById("onlyNewABU")) {
-		document.getElementById("onlyNewABU").onclick = function () {
+	const onlyNewABU = document.getElementById("onlyNewABU");
+	if (onlyNewABU) {
+		onlyNewABU.onclick = function () {
 			ABU(ABUState.domain, true);
 		};
 	}
 
-	document.getElementById("notification").style.display =
-		input !== "" ? "block" : "none";
+	notification.style.display = inputHTML !== "" ? "block" : "none";
 }
 
 //Stores an object in the user's synced data
