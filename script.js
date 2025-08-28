@@ -680,17 +680,21 @@ function ABU(domainPath, createNew = false) {
 	chrome.browserAction.setIcon({ path: activeIcons });
 }
 
-//Create a new bookmark to be an ABUkmark
-function createABUkmark(input, parentId) {
-	ABUid = Date.now();
+/**
+ * Creates an ABUkmark (a special bookmark) and stores it in the specified folder.
+ * @param {string} domainPath - The domain path to store in the ABUkmark data.
+ * @param {string} parentId - The ID of the parent folder where the ABUkmark will be created.
+ */
+function createABUkmark(domainPath, parentId) {
+	const ABUid = Date.now();
 	chrome.bookmarks.create(
 		{
-			parentId: parentId,
-			title: ABUState.title + " (ABU)",
+			parentId,
+			title: `${ABUState.title} (ABU)`,
 			url: createABURL(ABUState.url, ABUid),
 		},
-		function (newBookmark) {
-			storeObj(input, ABUid);
+		function () {
+			storeObj(domainPath, ABUid);
 		}
 	);
 }
