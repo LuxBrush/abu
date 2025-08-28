@@ -597,7 +597,10 @@ function createPage() {
 	});
 }
 
-//Warning when overwriting lower-level ABUkmarks
+/**
+ * Warns the user if they might accidentally overwrite existing ABUkmarks deeper in the website
+ * @param {chrome.bookmarks.BookmarkTreeNode} bookmark - The bookmark to check for ABU status
+ */
 function overwriteWarning(bookmark) {
 	if (
 		bookmark.title.indexOf(" (ABU)") !== -1 &&
