@@ -13,6 +13,9 @@ const ABUState = {
 	warningClass: "",
 };
 
+/** @type {HTMLButtonElement} */
+let mainButton;
+
 //Warn about home page ABUkmarks going everywhere if they're on the home page
 
 console.log(
@@ -339,9 +342,9 @@ function updateTabInfo(thisTab) {
 }
 
 function createPage() {
-	chrome.storage.sync.get(function (storage) {
+	chrome.storage.sync.get(function (/** @type {ABUStorage} */ storage) {
 		//ABUVersion info
-		if (!storage["ABUVersion"] || storage["ABUVersion"] < ABUVersion) {
+		if (!storage.ABUVersion || storage.ABUVersion < ABUVersion) {
 			document
 				.getElementsByTagName("BODY")[0]
 				.insertAdjacentHTML(
@@ -351,7 +354,7 @@ function createPage() {
 			chrome.storage.sync.set({ ABUVersion: ABUVersion });
 		}
 
-		mainButton.dataset.multiple = 0;
+		mainButton.dataset.multiple = "0";
 		//console.log(domain,domain.substr(0,domain.length-2).indexOf("/")==-1);
 
 		console.log("url is", ABUState.url);
@@ -372,54 +375,53 @@ function createPage() {
 					"ABUkmark a subpage if possible so visiting about, archives, links, etc doesn't update bookmarks. Just click on an article, a back button, or a button to start reading and it should be perfect!<br>";
 		}
 
-		anywhereButtons = "";
+		let anywhereButtons = "";
 
 		ABUState.domain = checkLevels(storage, ABUState.domain);
 
 		//Setup buttons
 		if (!storage[ABUState.domain]) {
 			//If we don't have an ABUkmark for this site
-			chrome.bookmarks.search(ABUState.domain, function (thisBookmark1) {
-				if (thisBookmark1[0]) {
+			chrome.bookmarks.search(ABUState.domain, function (bookmarkNode) {
+				const firstBookmark = bookmarkNode[0];
+				if (firstBookmark) {
 					//If the bookmark exists
 					mainButton.innerHTML = "Convert to ABUkmark";
 					mainButton.style.backgroundColor = "#9ccc5e";
 
-					overwriteWarning(thisBookmark1[0]);
+					overwriteWarning(firstBookmark);
 
 					setNotification(
 						ABUState.warning +
 							"Will convert <em title='" +
-							thisBookmark1[0].url +
+							bookmarkNode[0].url +
 							"'>" +
-							thisBookmark1[0].title +
+							bookmarkNode[0].title +
 							"</em>. <span id='onlyNewABU'>Or, make a new ABUkmark.</span>"
 					);
-					if (thisBookmark1.length > 1) {
-						bookmarksChoose = "";
+					if (bookmarkNode.length > 1) {
+						let bookmarksChoose = "";
 
 						ABUState.warningClass = "";
 
 						//Create a dropdown so you can choose which to change
-						for (let i = 0; i < thisBookmark1.length; i++) {
+						for (let i = 0; i < bookmarkNode.length; i++) {
 							ABUState.warningClass = "";
+							const bookmark = bookmarkNode[1];
+							if (!bookmark.url || !bookmark.title) continue;
 
-							overwriteWarning(thisBookmark1[i]);
-							const path = getWebpage(
-								thisBookmark1[i].url,
-								thisBookmark1[i].title,
-								storage
-							);
+							overwriteWarning(bookmark);
+							const path = getWebpage(bookmark.url, bookmark.title, storage);
 							if (!path) continue;
 
-							dropdownDomain = checkLevels(storage, path);
+							let dropdownDomain = checkLevels(storage, path);
 
 							//console.log(dropdownDomain);
 
 							//Add a dropdown with the bookmarks info
-							if (thisBookmark1[i].title.indexOf(" (ABU)") == -1) {
+							if (bookmarkNode[i].title.indexOf(" (ABU)") == -1) {
 								//If the bookmark is untitled, let the user know
-								thisBookmarkTitle = thisBookmark1[i].title;
+								let thisBookmarkTitle = bookmarkNode[i].title;
 								if (thisBookmarkTitle == "") {
 									thisBookmarkTitle = "(Untitled)";
 								}
@@ -428,35 +430,35 @@ function createPage() {
 									"<option class='" +
 									ABUState.warningClass +
 									"' title='" +
-									thisBookmark1[i].url +
+									bookmarkNode[i].url +
 									"' data-domain='" +
 									dropdownDomain +
 									"' value='" +
-									thisBookmark1[i].id +
+									bookmarkNode[i].id +
 									"'>" +
 									thisBookmarkTitle +
 									"</option>";
 							} else {
 								bookmarksChoose +=
 									"<option class='overwrite' title='" +
-									thisBookmark1[i].url +
+									bookmarkNode[i].url +
 									"' data-domain='" +
 									dropdownDomain +
 									"' value='" +
-									thisBookmark1[i].id +
+									bookmarkNode[i].id +
 									"'>" +
-									thisBookmark1[i].title +
+									bookmarkNode[i].title +
 									"</option>";
 							}
 						}
 						setNotification(
 							ABUState.warning +
-								thisBookmark1.length +
+								bookmarkNode.length +
 								" bookmarks spotted. Will convert <select>" +
 								bookmarksChoose +
 								"</select>. <span id='onlyNewABU'>Or, make a new ABUkmark.</span>"
 						);
-						mainButton.dataset.multiple = 1;
+						mainButton.dataset.multiple = "1";
 					}
 				} else {
 					//If it doesn't
@@ -469,29 +471,24 @@ function createPage() {
 					}
 				}
 				mainButton.onclick = function () {
-					ABU(ABUState.domain, false, true);
+					ABU(ABUState.domain, false);
 				};
 			});
 		} else {
 			//If we have an ABUkmark for this, according to our data
 			chrome.bookmarks.search(
-				"ABUid=" + storage[ABUState.domain]["ABUid"],
+				"ABUid=" + storage[ABUState.domain].ABUid,
 				function (thisBookmark2) {
 					if (!thisBookmark2) {
 						chrome.storage.sync.remove(ABUState.domain);
 					} else {
 						let check = false;
 						for (let i = 0; i < thisBookmark2.length; i++) {
-							const path = getWebpage(
-								thisBookmark2[i].url,
-								thisBookmark2[i].title,
-								storage
-							);
+							const bookmark = thisBookmark2[i];
+							if (!bookmark.url || !bookmark.title) continue;
+							const path = getWebpage(bookmark.url, bookmark.title, storage);
 							if (!path) continue;
-							if (
-								thisBookmark2[i] &&
-								ABUState.domain == checkLevels(storage, path)
-							) {
+							if (bookmark && ABUState.domain === checkLevels(storage, path)) {
 								check = true;
 							}
 						}
@@ -503,7 +500,7 @@ function createPage() {
 							mainButton.innerHTML = "Revert to normal bookmark";
 							mainButton.style.backgroundColor = "#f00";
 							mainButton.onclick = function () {
-								unABU(ABUState.domain, storage[ABUState.domain]["ABUid"]);
+								unABU(ABUState.domain, storage[ABUState.domain].ABUid);
 								chrome.browserAction.setIcon({ path: inactiveIcons });
 							};
 						} else {
@@ -511,7 +508,7 @@ function createPage() {
 							mainButton.innerHTML = "Create ABUkmark";
 							mainButton.style.backgroundColor = "#619919";
 							mainButton.onclick = function () {
-								ABU(ABUState.domain, false, false);
+								ABU(ABUState.domain, false);
 							};
 						}
 					}
@@ -519,7 +516,7 @@ function createPage() {
 			);
 		}
 
-		var bookmarks = Object.keys(storage);
+		const bookmarks = Object.keys(storage);
 
 		//Create buttons for removing ABUkmarks
 		for (let i = 0; i < bookmarks.length; i++) {
@@ -530,39 +527,35 @@ function createPage() {
 			}
 
 			//Look for the bookmarks as we go through the list, to make sure they still exist.
-			if (
-				chrome.bookmarks.search(
-					"ABUid=" + storage[bookmarks[i]]["ABUid"],
-					function (thisBookmark3) {
-						//console.log(storage[bookmarks[i]]["ABUid"],"Bookmark is: ",thisBookmark3,thisBookmark3.length);
+			chrome.bookmarks.search(
+				"ABUid=" + storage[bookmarks[i]]["ABUid"],
+				function (thisBookmark3) {
+					//console.log(storage[bookmarks[i]]["ABUid"],"Bookmark is: ",thisBookmark3,thisBookmark3.length);
 
-						//If a bookmark in the list doesn't exist
-						if (thisBookmark3.length === 0) {
-							let ABUid = storage[bookmarks[i]]["ABUid"];
+					//If a bookmark in the list doesn't exist
+					if (thisBookmark3.length === 0) {
+						const ABUid = storage[bookmarks[i]]["ABUid"];
+						const ABUButton = document.querySelector(
+							`button[data-id="${ABUid}"]`
+						);
 
-							//Remove the info
-							chrome.storage.sync.remove(bookmarks[i]);
+						//Remove the info
+						chrome.storage.sync.remove(bookmarks[i]);
 
-							//Remove the element, if it exists
-							if (
-								(ABUid = document.querySelector(
-									'button[data-id="' + ABUid + '"]'
-								))
-							)
-								ABUid.remove();
-						}
+						//Remove the element, if it exists
+						if (ABUButton) ABUButton.remove();
 					}
-				)
+				}
 			);
 
 			//Add the button if it exists
 			anywhereButtons +=
 				"<button data-id='" +
-				storage[Object.keys(storage)[i]]["ABUid"] +
+				storage[Object.keys(storage)[i]].ABUid +
 				"' data-domain='" +
 				Object.keys(storage)[i] +
 				"'>&times; <img src='" +
-				storage[Object.keys(storage)[i]]["favIconUrl"] +
+				storage[Object.keys(storage)[i]].favIconUrl +
 				"'> " +
 				Object.keys(storage)[i] +
 				"</button>";
@@ -577,19 +570,27 @@ function createPage() {
 			"Any favicons not found will produce errors below (it's not really worth worrying about)"
 		);
 
-		document.getElementById("abu-anywhere").innerHTML = anywhereButtons;
+		const abuAnywhereDiv = /** @type {HTMLDivElement} */ (
+			document.getElementById("abu-anywhere")
+		);
+		if (!abuAnywhereDiv) return;
 
-		var buttons = document.getElementById("abu-anywhere").children;
-		var images = document.getElementsByTagName("img");
+		abuAnywhereDiv.innerHTML = anywhereButtons;
+
+		const buttons = abuAnywhereDiv.getElementsByTagName("button");
+		const images = abuAnywhereDiv.getElementsByTagName("img");
 
 		//Add functions for each button
 		for (let ii = 0; ii < buttons.length; ii++) {
-			buttons[ii].onclick = function () {
-				unABU(this.dataset.domain, this.dataset.id);
+			const button = buttons[ii];
+			if (!button.dataset.domain || !button.dataset.id) continue;
+			const image = images[ii];
+			button.onclick = function () {
+				unABU(button.dataset.domain, button.dataset.id);
 			};
 
 			//Hide any images that fail to load properly
-			images[ii].onerror = function () {
+			image.onerror = function () {
 				this.style = "display:none;";
 			};
 		}
