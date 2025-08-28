@@ -586,7 +586,10 @@ function createPage() {
 			if (!button.dataset.domain || !button.dataset.id) continue;
 			const image = images[ii];
 			button.onclick = function () {
-				unABU(button.dataset.domain, button.dataset.id);
+				const domain = button.dataset.domain;
+				const id = button.dataset.id;
+				if (!domain || !id) return;
+				unABU(domain, parseInt(id));
 			};
 
 			//Hide any images that fail to load properly
@@ -734,26 +737,43 @@ function setNotification(inputHTML) {
 	notification.style.display = inputHTML !== "" ? "block" : "none";
 }
 
-//Stores an object in the user's synced data
-function storeObj(input, bookmarkId) {
-	var obj = {};
-	var foo = input;
-	obj[foo] = { ABUid: bookmarkId, favIconUrl: ABUState.favIconUrl };
-	chrome.storage.sync.set(obj);
+/**
+ * Persist one ABUkmark entry to storage under its scope key.
+ * Keeps the shape expected elsewhere: { ABUid, favIconUrl }.
+ * @param {string} scopeKey - Normalized domain/path or special token.
+ * @param {number} ABUid - Unique bookmark id.
+ */
+function storeObj(scopeKey, ABUid) {
+	// Guard against empty keys
+	if (!scopeKey) return;
+
+	/** @type {ABUEntry} */
+	const entry = {
+		ABUid: Number(ABUid),
+		favIconUrl: ABUState.favIconUrl,
+	};
+
+	chrome.storage.sync.set({ [scopeKey]: entry });
 	createPage();
 }
 
-//Make an ABUkmark back into a regular bookmark
-function unABU(setUrl, setId) {
+/**
+ * Make an ABUkmark back into a regular bookmark.
+ * @param {string} url - Scope key to remove from storage.
+ * @param {number} ABUid - ABU id associated with the bookmark.
+ */
+function unABU(url, ABUid) {
 	//Get the bookmark
-	chrome.bookmarks.search("ABUid=" + setId, function (targetABUkmark) {
+	chrome.bookmarks.search("ABUid=" + ABUid, function (targetABUkmark) {
+		const node = targetABUkmark && targetABUkmark[0];
+		if (!node || !node.url || !node.title) return;
 		//Remove the ABU tag
-		chrome.bookmarks.update(targetABUkmark[0].id, {
-			url: targetABUkmark[0].url.replace(/(\?|&)ABUid=[0-9]+/g, ""),
-			title: targetABUkmark[0].title.replace(" (ABU)", ""),
+		chrome.bookmarks.update(node.id, {
+			url: node.url.replace(/(\?|&)ABUid=[0-9]+/g, ""),
+			title: node.title.replace(" (ABU)", ""),
 		});
 	});
-	chrome.storage.sync.remove(setUrl, function () {
+	chrome.storage.sync.remove(url, function () {
 		setNotification("");
 		createPage();
 	});
