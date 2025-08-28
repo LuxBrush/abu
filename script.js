@@ -699,12 +699,17 @@ function createABUkmark(domainPath, parentId) {
 	);
 }
 
-//Make an ABURL
-function createABURL(inputURL, inputABUid) {
+/**
+ * Append the ABU identifier to a URL for bookmarking.
+ * Adds `ABUid` as a query param, preserving any existing query string.
+ * Used to tag ABUkmarks; `ABUid` is later searched and stripped on load.
+ * @param {string} url - Source URL to tag.
+ * @param {number} ABUid - Unique bookmark id (e.g., Date.now()).
+ * @returns {string} URL with the `ABUid` parameter appended.
+ */
+function createABURL(url, ABUid) {
 	//ABURL is the URL that ABU creates that specifies the bookmark is ABU; it just appends a querystring with the id
-	return (
-		inputURL + (inputURL.indexOf("?") > -1 ? "&" : "?") + "ABUid=" + inputABUid
-	);
+	return url + (url.indexOf("?") > -1 ? "&" : "?") + "ABUid=" + ABUid;
 }
 
 function setNotification(input) {
