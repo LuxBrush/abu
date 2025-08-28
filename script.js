@@ -471,7 +471,7 @@ function createPage() {
 					}
 				}
 				mainButton.onclick = function () {
-					ABU(ABUState.domain, false);
+					ABU(ABUState.domain);
 				};
 			});
 		} else {
@@ -508,7 +508,7 @@ function createPage() {
 							mainButton.innerHTML = "Create ABUkmark";
 							mainButton.style.backgroundColor = "#619919";
 							mainButton.onclick = function () {
-								ABU(ABUState.domain, false);
+								ABU(ABUState.domain);
 							};
 						}
 					}
@@ -612,28 +612,33 @@ function overwriteWarning(bookmark) {
 	}
 }
 
-function ABU(input, mustMakeNew) {
-	inArray = 0;
-	inArrayDomain = "";
+/**
+ * Creates or converts an ABUkmark for the given domain
+ * @param {string} domainPath - The domain/path to bookmark
+ * @param {boolean} [createNew=false] - True to force new bookmark creation
+ */
+function ABU(domainPath, createNew = false) {
+	let inArray = 0;
+	let inArrayDomain = "";
 
-	if (mainButton.dataset.multiple == 1) {
-		inArray = document.getElementsByTagName("SELECT")[0].selectedIndex;
+	if (mainButton.dataset.multiple === "1") {
+		const selectCollection =
+			/** @type {HTMLCollectionOf<HTMLSelectElement>} */ (
+				document.getElementsByTagName("SELECT")
+			);
+		const selectElement = selectCollection[0];
+		inArray = selectElement.selectedIndex;
 
 		//Get the bookmark to change with this:
-		if (
-			document.getElementsByTagName("SELECT")[0].options[
-				document.getElementsByTagName("SELECT")[0].selectedIndex
-			].className !== ""
-		) {
-			inArrayDomain =
-				document.getElementsByTagName("SELECT")[0].options[
-					document.getElementsByTagName("SELECT")[0].selectedIndex
-				].dataset.domain;
+		if (selectElement.options[selectElement.selectedIndex].className !== "") {
+			const selectDomain =
+				selectElement.options[selectElement.selectedIndex].dataset.domain;
+			if (selectDomain) inArrayDomain = selectDomain;
 		}
 	}
 
-	chrome.bookmarks.search(input, function (thisBookmark) {
-		if (!thisBookmark[inArray] || mustMakeNew) {
+	chrome.bookmarks.search(domainPath, function (thisBookmark) {
+		if (!thisBookmark[inArray] || createNew) {
 			//If the bookmark doesn't exist
 
 			//Check for ABUkmarks folder, add if doesn't exist
@@ -641,11 +646,11 @@ function ABU(input, mustMakeNew) {
 				if (!thisFolder[0]) {
 					//If folder ABUkmarks doesn't exist
 					chrome.bookmarks.create({ title: "ABUkmarks" }, function (newFolder) {
-						createABUkmark(input, newFolder.id);
+						createABUkmark(domainPath, newFolder.id);
 					});
 				} else {
 					//If the folder exists
-					createABUkmark(input, thisFolder[0].id);
+					createABUkmark(domainPath, thisFolder[0].id);
 				}
 				//Not always located there; get exact location and state it
 				setNotification(
@@ -661,7 +666,7 @@ function ABU(input, mustMakeNew) {
 
 			var ABUid = Date.now();
 
-			storeObj(input, ABUid);
+			storeObj(domainPath, ABUid);
 
 			chrome.bookmarks.update(thisBookmark[inArray].id, {
 				title: ABUState.title + " (ABU)",
@@ -703,7 +708,7 @@ function setNotification(input) {
 
 	if (document.getElementById("onlyNewABU")) {
 		document.getElementById("onlyNewABU").onclick = function () {
-			ABU(ABUState.domain, true, false);
+			ABU(ABUState.domain, true);
 		};
 	}
 
