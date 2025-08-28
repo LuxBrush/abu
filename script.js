@@ -187,14 +187,81 @@ chrome.tabs.onActivated.addListener(function (activatedTab) {
 	});
 });
 
+/**
+ * @overload
+ * @param {chrome.tabs.Tab} tab
+ * @returns {{id:number, url:string, title:string, favIconUrl:string}}
+ */
+/**
+ * @overload
+ * @param {chrome.tabs.Tab} tab
+ * @param {{includeTitle?: true, includeFavIcon?: true}} options
+ * @returns {{id:number, url:string, title:string, favIconUrl:string}}
+ */
+/**
+ * @overload
+ * @param {chrome.tabs.Tab} tab
+ * @param {{includeTitle?: true, includeFavIcon: false}} options
+ * @returns {{id:number, url:string, title:string}}
+ */
+/**
+ * @overload
+ * @param {chrome.tabs.Tab} tab
+ * @param {{includeTitle: false, includeFavIcon?: true}} options
+ * @returns {{id:number, url:string, favIconUrl:string}}
+ */
+/**
+ * @overload
+ * @param {chrome.tabs.Tab} tab
+ * @param {{includeTitle: false, includeFavIcon: false}} options
+ * @returns {{id:number, url:string}}
+ */
+/**
+ * Verify a tab and return selected properties.
+ * @param {chrome.tabs.Tab} tab
+ * @param {{includeTitle?: boolean, includeFavIcon?: boolean}} [options]
+ * @throws {Error} If required properties are missing
+ * @returns {{id:number, url:string, title?:string, favIconUrl?:string}}
+ */
+function verifyTab(tab, options = {}) {
+	const { includeTitle = true, includeFavIcon = true } = options;
+
+	// Validate required properties
+	if (typeof tab.id === "undefined") {
+		throw new Error("Tab must have an id");
+	}
+	if (typeof tab.url === "undefined") {
+		throw new Error("Tab must have a url");
+	}
+	if (includeTitle && typeof tab.title === "undefined") {
+		throw new Error("Tab must have a title");
+	}
+	if (includeFavIcon && typeof tab.favIconUrl === "undefined") {
+		throw new Error("Tab must have a favIconUrl");
+	}
+
+	// Return only essential properties
+	return {
+		id: tab.id,
+		url: tab.url,
+		...(includeTitle && { title: tab.title }),
+		...(includeFavIcon && { favIconUrl: tab.favIconUrl }),
+	};
+}
+
+/**
+ * Updates the icon and ABUkmark for a given tab
+ * @param {chrome.tabs.Tab} thisTab - The tab to update
+ */
 function updateTabInfo(thisTab) {
 	///Tab-specific code
+	const tab = verifyTab(thisTab, { includeFavIcon: false });
 	//YOUTUBE// add time of video
-	if (/youtube.com\/watch/.test(thisTab.url)) {
+	if (/youtube.com\/watch/.test(tab.url)) {
 		//We cannot run functions, like document.getElementById("movie_player").getCurrentTime(), but we can read values. So we have to use a roundabout method to get what we want; the best seems to be getting the aria-valuenow from ytp-progress-bar
 
 		// As a video progresses, automatically adds
-		chrome.tabs.executeScript(thisTab.id, {
+		chrome.tabs.executeScript(tab.id, {
 			allFrames: true,
 			code: `
 			if(!ABUYT){
@@ -218,7 +285,7 @@ function updateTabInfo(thisTab) {
 
 	chrome.storage.sync.get(function (/** @type {ABUStorage} */ storage) {
 		//NOT DONE YET: If the page is part of a higher domain that we ARE keeping track of but we don't have a direct domain for this one, let's go up some levels:
-		const path = getWebpage(thisTab.url, thisTab.title, storage);
+		const path = getWebpage(tab.url, tab.title, storage);
 		if (!path) return;
 		ABUState.domain = checkLevels(storage, path);
 
@@ -241,15 +308,12 @@ function updateTabInfo(thisTab) {
 						//If the bookmark's been found!
 						//If you're saving for the comic pages, don't update bookmarks for the comic/archive pages. If this isn't a comics page, it'll run this too
 						if (
-							!(
-								thisTab.url.endsWith("/archive") &&
-								localDomain.endsWith("comic/")
-							)
+							!(tab.url.endsWith("/archive") && localDomain.endsWith("comic/"))
 						) {
 							//Get the target ABUkmark's id and update that ABUkmark with this tab's URL
 							chrome.bookmarks.update(targetABUkmark[0].id, {
-								title: thisTab.title + " (ABU)",
-								url: createABURL(thisTab.url, storage[localDomain]["ABUid"]),
+								title: tab.title + " (ABU)",
+								url: createABURL(tab.url, storage[localDomain]["ABUid"]),
 							});
 
 							//TESTING FAVICONS//
