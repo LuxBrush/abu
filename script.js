@@ -625,10 +625,9 @@ function ABU(domainPath, createNew = false) {
 	let inArrayDomain = "";
 
 	if (mainButton.dataset.multiple === "1") {
-		const selectCollection =
-			/** @type {HTMLCollectionOf<HTMLSelectElement>} */ (
-				document.getElementsByTagName("SELECT")
-			);
+		const selectCollection = /** @type {HTMLCollectionOf<HTMLSelectElement>} */ (
+			document.getElementsByTagName("SELECT")
+		);
 		const selectElement = selectCollection[0];
 		inArray = selectElement.selectedIndex;
 
