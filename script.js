@@ -784,39 +784,29 @@ if (document.getElementById("current-page")) {
 	console.log("ABU popup loaded!");
 
 	//Have notifications depending on what's done
-
-	mainButton = document.getElementById("current-page");
-	mainButton.dataset.multiple = 0;
+	const mainButtonCheck = /** @type {HTMLButtonElement | null} */ (
+		document.getElementById("current-page")
+	);
+	if (!mainButtonCheck) {
+		throw new Error("Main button element not found");
+	}
+	mainButton = mainButtonCheck;
+	mainButton.dataset.multiple = "0";
 
 	//Get URL
 	chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
-		//console.log(tabs);
 		//Need to get storage here, for getting the webpage
 		chrome.storage.sync.get(function (/** @type {ABUStorage} */ storage) {
-			const path = getWebpage(tabs[0].url, tabs[0].title, storage);
+			const tab = tabs[0];
+			if (!tab.url || !tab.title || !tab.favIconUrl) return;
+
+			const path = getWebpage(tab.url, tab.title, storage);
 			if (!path) return;
-			ABUState.url = tabs[0].url;
+
+			ABUState.url = tab.url;
 			ABUState.domain = path;
-			ABUState.title = tabs[0].title;
-			ABUState.favIconUrl = tabs[0].favIconUrl;
-
-			//Link to email me
-			document.getElementById("email").onclick = function () {
-				chrome.tabs.create({
-					active: true,
-					url: "mailto:joshuapowlison@gmail.com",
-					index: tabs[0].index + 1,
-				});
-			};
-
-			//Link to my website
-			document.getElementById("website").onclick = function () {
-				chrome.tabs.create({
-					active: true,
-					url: "https://joshpowlison.com/",
-					index: tabs[0].index + 1,
-				});
-			};
+			ABUState.title = tab.title;
+			ABUState.favIconUrl = tab.favIconUrl;
 
 			createPage();
 		});
