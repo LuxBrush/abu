@@ -749,7 +749,7 @@ function storeObj(scopeKey, ABUid) {
 
 	/** @type {ABUEntry} */
 	const entry = {
-		ABUid: Number(ABUid),
+		ABUid,
 		favIconUrl: ABUState.favIconUrl,
 	};
 
