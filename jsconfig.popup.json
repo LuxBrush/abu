@@ -1,0 +1,10 @@
+{
+  "compilerOptions": {
+    "strict": true,
+    "allowJs": true,
+    "checkJs": true,
+    "lib": ["ES2021", "DOM"],
+    "noEmit": true
+  },
+  "include": ["popup.js", "definitions.d.ts"]
+}
