@@ -1,7 +1,7 @@
 {
-  "files": [],
-  "references": [
-    { "path": "./jsconfig.background.json" },
-    { "path": "./jsconfig.popup.json" }
-  ]
+	"files": [],
+	"references": [
+		{ "path": "./jsconfig.background.json" },
+		{ "path": "./jsconfig.popup.json" }
+	]
 }

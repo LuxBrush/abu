@@ -1,10 +1,10 @@
 {
-  "compilerOptions": {
-    "strict": true,
-    "allowJs": true,
-    "checkJs": true,
-    "lib": ["ES2021", "WebWorker"],
-    "noEmit": true
-  },
-  "include": ["background.js", "definitions.d.ts"]
+	"compilerOptions": {
+		"strict": true,
+		"allowJs": true,
+		"checkJs": true,
+		"lib": ["ES2021", "WebWorker"],
+		"noEmit": true
+	},
+	"include": ["background.js", "definitions.d.ts"]
 }
