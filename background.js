@@ -166,10 +166,13 @@ chrome.tabs.onUpdated.addListener(function (_tabId, changeInfo, updatedTab) {
 		//If the URL had an ABUid, remove it
 		if (newURL !== updatedTab.url) {
 			//Loads the page without the ABUid
-			chrome.tabs.executeScript(updatedTab.id, {
-				code: "location.replace('" + newURL + "');",
-				runAt: "document_start",
-			});
+			if (updatedTab.id) {
+				chrome.scripting.executeScript({
+					target: { tabId: updatedTab.id },
+					func: (/** @type {string} */ url) => location.replace(url),
+					args: [newURL],
+				});
+			}
 		}
 	}
 
