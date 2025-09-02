@@ -155,41 +155,6 @@ function checkLevels(storage, urlOrTitle) {
 	return output;
 }
 
-//Any changes to the URL call this- even a querystring change
-chrome.tabs.onUpdated.addListener(function (_tabId, changeInfo, updatedTab) {
-	//Check for ABUids on loading (we don't want to wait until it finishes loading to check, in some cases that could take a while or the ABUid could break PHP or other web code)
-	if (changeInfo.status == "loading") {
-		//Save the URL without an ABUid
-		if (!updatedTab.url) return;
-		var newURL = updatedTab.url.replace(/(\?|&)ABUid.*/, "");
-
-		//If the URL had an ABUid, remove it
-		if (newURL !== updatedTab.url) {
-			//Loads the page without the ABUid
-			chrome.tabs.executeScript(updatedTab.id, {
-				code: "location.replace('" + newURL + "');",
-				runAt: "document_start",
-			});
-		}
-	}
-
-	//Save the data if we're not switching from an ABUid tab (must be complete to get the title)
-	if (changeInfo.status == "complete" || changeInfo.title) {
-		//YouTube seems to have an AJAX setup now; when the title's been adjusted, we should be good to go! (status doesn't go to complete, which implies AJAX setup)
-		updateTabInfo(updatedTab);
-	}
-});
-
-//When change tabs, update icon
-
-//We will check for onActivated so that when you switch tabs the icon can update. And, that way, if you have multiple tabs open for the same domain, whichever one you visit sets the ABUkmark (so it can switch dynamically)
-chrome.tabs.onActivated.addListener(function (activatedTab) {
-	//activatedTab only returns the tabId and windowId, so we need to use chrome.tabs.get to get the data we're REALLY interested in:
-	chrome.tabs.get(activatedTab.tabId, function (getTab) {
-		updateTabInfo(getTab);
-	});
-});
-
 /**
  * @overload
  * @param {chrome.tabs.Tab} tab
@@ -250,95 +215,6 @@ function verifyTab(tab, options = {}) {
 		...(includeTitle && { title: tab.title }),
 		...(includeFavIcon && { favIconUrl: tab.favIconUrl }),
 	};
-}
-
-/**
- * Updates the icon and ABUkmark for a given tab
- * @param {chrome.tabs.Tab} thisTab - The tab to update
- */
-function updateTabInfo(thisTab) {
-	///Tab-specific code
-	const tab = verifyTab(thisTab, { includeFavIcon: false });
-	//YOUTUBE// add time of video
-	if (/youtube.com\/watch/.test(tab.url)) {
-		//We cannot run functions, like document.getElementById("movie_player").getCurrentTime(), but we can read values. So we have to use a roundabout method to get what we want; the best seems to be getting the aria-valuenow from ytp-progress-bar
-
-		// As a video progresses, automatically adds
-		chrome.tabs.executeScript(tab.id, {
-			allFrames: true,
-			code: `
-			if(!ABUYT){
-				var ABUYT = setInterval(function(){
-					var progressBar = document.getElementsByClassName("ytp-progress-bar");
-					
-					if(!progressBar.length) return;
-					
-					// If a miniplayer is opened, we need to make sure we get the last element- that will be the main player.
-					var newURL = window.location.href.replace(/&t=[^&]+|$/,"&t="+progressBar[progressBar.length-1].getAttribute("aria-valuenow"));
-					
-					// Don't update the history if it's the same- this wastes resources
-					if(newURL === window.location.href) return;
-					
-					history.replaceState(null,'',newURL);
-				},1000);
-			}
-		`,
-		});
-	}
-
-	chrome.storage.sync.get(function (/** @type {ABUStorage} */ storage) {
-		//NOT DONE YET: If the page is part of a higher domain that we ARE keeping track of but we don't have a direct domain for this one, let's go up some levels:
-		const path = getWebpage(tab.url, tab.title, storage);
-		if (!path) return;
-		ABUState.domain = checkLevels(storage, path);
-
-		// In case this gets changed elsewhere, keep it the same here
-		var localDomain = ABUState.domain;
-
-		//If this domain has an ABUkmark associated with it
-		if (storage[localDomain]) {
-			//Check that the bookmark hasn't been deleted
-			chrome.bookmarks.search(
-				"ABUid=" + storage[localDomain]["ABUid"],
-				async function (targetABUkmark) {
-					//console.log(targetABUkmark);
-
-					//If the bookmark's gone
-					if (!targetABUkmark || targetABUkmark.length === 0) {
-						//Get the target ABUkmark's id and update that ABUkmark with this tab's URL
-						chrome.storage.sync.remove(localDomain);
-					} else {
-						//If the bookmark's been found!
-						//If you're saving for the comic pages, don't update bookmarks for the comic/archive pages. If this isn't a comics page, it'll run this too
-						if (
-							!(tab.url.endsWith("/archive") && localDomain.endsWith("comic/"))
-						) {
-							//Get the target ABUkmark's id and update that ABUkmark with this tab's URL
-							chrome.bookmarks.update(targetABUkmark[0].id, {
-								title: tab.title + " (ABU)",
-								url: createABURL(tab.url, storage[localDomain]["ABUid"]),
-							});
-
-							//TESTING FAVICONS//
-							//thisTab.url=ABURL;
-							//chrome.bookmarks.update(targetABUkmark[0].id,{title:thisTab.title+' (ABU)',url:thisTab.url});
-
-							//If this new tab is the active one, update the icon:
-							if (thisTab.active) {
-								chrome.browserAction.setIcon({ path: activeIcons });
-							}
-						}
-					}
-				}
-			);
-		} else {
-			//If this webpage doesn't have an associated ABUkmark
-			//If this new tab is the current one, update the icon:
-			if (thisTab.active) {
-				chrome.browserAction.setIcon({ path: inactiveIcons });
-			}
-		}
-	});
 }
 
 function createPage() {
@@ -501,7 +377,7 @@ function createPage() {
 							mainButton.style.backgroundColor = "#f00";
 							mainButton.onclick = function () {
 								unABU(ABUState.domain, storage[ABUState.domain].ABUid);
-								chrome.browserAction.setIcon({ path: inactiveIcons });
+								chrome.action.setIcon({ path: inactiveIcons });
 							};
 						} else {
 							chrome.storage.sync.remove(ABUState.domain);
@@ -679,7 +555,7 @@ function ABU(domainPath, createNew = false) {
 		}
 	});
 
-	chrome.browserAction.setIcon({ path: activeIcons });
+	chrome.action.setIcon({ path: activeIcons });
 }
 
 /**
