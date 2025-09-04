@@ -13,6 +13,29 @@ const ABUState = {
 	warningClass: "",
 };
 
+function getProgress() {
+	const videoTest = document.querySelector("video");
+	if (!videoTest) return;
+	videoTest.addEventListener("timeupdate", () => {
+		setTabURLTime(videoTest.currentTime);
+	});
+
+	/**
+	 * Updates the current URL with the video's current timestamp
+	 * Sets a 't' parameter in the URL query string with the current time in seconds
+	 * Uses history.replaceState to update the URL without reloading the page
+	 * @param {number} time - The current video playback time in seconds
+	 */
+	function setTabURLTime(time) {
+		const url = new URL(location.href);
+		const newTime = `${Math.floor(time)}s`;
+
+		if (url.searchParams.get("t") === newTime) return;
+		url.searchParams.set("t", newTime);
+		history.replaceState(history.state, "", url);
+	}
+}
+
 /**
  * Checks for higher level ABUkmarks
  * @param {ABUStorage} storage The extension's storage object
@@ -47,4 +70,11 @@ function checkLevels(storage, urlOrTitle) {
 	return output;
 }
 
-export { activeIcons, inactiveIcons, ABUVersion, ABUState, checkLevels };
+export {
+	activeIcons,
+	inactiveIcons,
+	ABUVersion,
+	ABUState,
+	getProgress,
+	checkLevels,
+};

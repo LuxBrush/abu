@@ -1,4 +1,10 @@
-import { activeIcons, inactiveIcons, ABUState, checkLevels } from "./common.js";
+import {
+	activeIcons,
+	inactiveIcons,
+	ABUState,
+	checkLevels,
+	getProgress,
+} from "./common.js";
 
 //Warn about home page ABUkmarks going everywhere if they're on the home page
 
@@ -119,11 +125,7 @@ chrome.tabs.onUpdated.addListener(function (_tabId, changeInfo, updatedTab) {
 		if (newURL !== updatedTab.url) {
 			//Loads the page without the ABUid
 			if (updatedTab.id) {
-				chrome.scripting.executeScript({
-					target: { tabId: updatedTab.id },
-					func: (/** @type {string} */ url) => location.replace(url),
-					args: [newURL],
-				});
+				chrome.tabs.update(updatedTab.id, { url: newURL });
 			}
 		}
 	}
@@ -219,25 +221,9 @@ function updateTabInfo(thisTab) {
 		//We cannot run functions, like document.getElementById("movie_player").getCurrentTime(), but we can read values. So we have to use a roundabout method to get what we want; the best seems to be getting the aria-valuenow from ytp-progress-bar
 
 		// As a video progresses, automatically adds
-		chrome.tabs.executeScript(tab.id, {
-			allFrames: true,
-			code: `
-			if(!ABUYT){
-				var ABUYT = setInterval(function(){
-					var progressBar = document.getElementsByClassName("ytp-progress-bar");
-					
-					if(!progressBar.length) return;
-					
-					// If a miniplayer is opened, we need to make sure we get the last element- that will be the main player.
-					var newURL = window.location.href.replace(/&t=[^&]+|$/,"&t="+progressBar[progressBar.length-1].getAttribute("aria-valuenow"));
-					
-					// Don't update the history if it's the same- this wastes resources
-					if(newURL === window.location.href) return;
-					
-					history.replaceState(null,'',newURL);
-				},1000);
-			}
-		`,
+		chrome.scripting.executeScript({
+			target: { tabId: tab.id },
+			func: getProgress,
 		});
 	}
 
