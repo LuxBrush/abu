@@ -1,17 +1,4 @@
-//Icons
-const activeIcons = { 128: "icons/128blue.png" };
-const inactiveIcons = { 128: "icons/128gray.png" };
-const ABUVersion = 1.4;
-
-//Call the variables here
-const ABUState = {
-	url: "",
-	domain: "",
-	title: "",
-	favIconUrl: "",
-	warning: "",
-	warningClass: "",
-};
+import { activeIcons, inactiveIcons, ABUVersion, ABUState } from "./common.js";
 
 /** @type {HTMLButtonElement} */
 let mainButton;

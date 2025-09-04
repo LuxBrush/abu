@@ -6,5 +6,5 @@
 		"lib": ["ES2021", "DOM"],
 		"noEmit": true
 	},
-	"include": ["popup.js", "definitions.d.ts"]
+	"include": ["popup.js", "common.js", "definitions.d.ts"]
 }
