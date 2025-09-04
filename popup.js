@@ -142,68 +142,6 @@ function checkLevels(storage, urlOrTitle) {
 	return output;
 }
 
-/**
- * @overload
- * @param {chrome.tabs.Tab} tab
- * @returns {{id:number, url:string, title:string, favIconUrl:string}}
- */
-/**
- * @overload
- * @param {chrome.tabs.Tab} tab
- * @param {{includeTitle?: true, includeFavIcon?: true}} options
- * @returns {{id:number, url:string, title:string, favIconUrl:string}}
- */
-/**
- * @overload
- * @param {chrome.tabs.Tab} tab
- * @param {{includeTitle?: true, includeFavIcon: false}} options
- * @returns {{id:number, url:string, title:string}}
- */
-/**
- * @overload
- * @param {chrome.tabs.Tab} tab
- * @param {{includeTitle: false, includeFavIcon?: true}} options
- * @returns {{id:number, url:string, favIconUrl:string}}
- */
-/**
- * @overload
- * @param {chrome.tabs.Tab} tab
- * @param {{includeTitle: false, includeFavIcon: false}} options
- * @returns {{id:number, url:string}}
- */
-/**
- * Verify a tab and return selected properties.
- * @param {chrome.tabs.Tab} tab
- * @param {{includeTitle?: boolean, includeFavIcon?: boolean}} [options]
- * @throws {Error} If required properties are missing
- * @returns {{id:number, url:string, title?:string, favIconUrl?:string}}
- */
-function verifyTab(tab, options = {}) {
-	const { includeTitle = true, includeFavIcon = true } = options;
-
-	// Validate required properties
-	if (typeof tab.id === "undefined") {
-		throw new Error("Tab must have an id");
-	}
-	if (typeof tab.url === "undefined") {
-		throw new Error("Tab must have a url");
-	}
-	if (includeTitle && typeof tab.title === "undefined") {
-		throw new Error("Tab must have a title");
-	}
-	if (includeFavIcon && typeof tab.favIconUrl === "undefined") {
-		throw new Error("Tab must have a favIconUrl");
-	}
-
-	// Return only essential properties
-	return {
-		id: tab.id,
-		url: tab.url,
-		...(includeTitle && { title: tab.title }),
-		...(includeFavIcon && { favIconUrl: tab.favIconUrl }),
-	};
-}
-
 function createPage() {
 	chrome.storage.sync.get(function (/** @type {ABUStorage} */ storage) {
 		//ABUVersion info
