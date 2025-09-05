@@ -5,17 +5,38 @@ import {
 	ABUState,
 	checkLevels,
 	getWebpage,
-	createABURL
+	createABURL,
 } from "./common.js";
 
-/** @type {HTMLButtonElement} */
-let mainButton;
+console.log("ABU popup loaded!");
 
-//Warn about home page ABUkmarks going everywhere if they're on the home page
-
-console.log(
-	"May get an error: Unchecked runtime.lastError: The tab was closed. The code should keep running, but there's no way to check for if a tab exists; only to hide the error. I opted for just letting it be. :P"
+const mainButton = /** @type {HTMLButtonElement} */ (
+	document.getElementById("current-page")
 );
+if (!mainButton) {
+	throw new Error("Main button element not found");
+}
+mainButton.dataset.multiple = "0";
+
+//Get URL
+chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
+	//Need to get storage here, for getting the webpage
+	chrome.storage.sync.get(function (/** @type {ABUStorage} */ storage) {
+		const tab = tabs[0];
+		if (!tab.url || !tab.title || !tab.favIconUrl) return;
+
+		const path = getWebpage(tab.url, tab.title, storage);
+		if (!path) return;
+
+		ABUState.url = tab.url;
+		ABUState.domain = path;
+		ABUState.title = tab.title;
+		ABUState.favIconUrl = tab.favIconUrl;
+
+		createPage();
+	});
+});
+//Warn about home page ABUkmarks going everywhere if they're on the home page
 
 function createPage() {
 	chrome.storage.sync.get(function (/** @type {ABUStorage} */ storage) {
@@ -82,7 +103,7 @@ function createPage() {
 						//Create a dropdown so you can choose which to change
 						for (let i = 0; i < bookmarkNode.length; i++) {
 							ABUState.warningClass = "";
-							const bookmark = bookmarkNode[1];
+							const bookmark = bookmarkNode[i];
 							if (!bookmark.url || !bookmark.title) continue;
 
 							overwriteWarning(bookmark);
@@ -374,7 +395,6 @@ function createABUkmark(domainPath, parentId) {
 	);
 }
 
-
 /**
  * Update the popup notification UI.
  * Sets the `#notification` HTML, toggles visibility, and binds
@@ -436,39 +456,5 @@ function unABU(url, ABUid) {
 	chrome.storage.sync.remove(url, function () {
 		setNotification("");
 		createPage();
-	});
-}
-
-//Run a popup's element is present, run the popup script!
-if (document.getElementById("current-page")) {
-	console.log("ABU popup loaded!");
-
-	//Have notifications depending on what's done
-	const mainButtonCheck = /** @type {HTMLButtonElement | null} */ (
-		document.getElementById("current-page")
-	);
-	if (!mainButtonCheck) {
-		throw new Error("Main button element not found");
-	}
-	mainButton = mainButtonCheck;
-	mainButton.dataset.multiple = "0";
-
-	//Get URL
-	chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
-		//Need to get storage here, for getting the webpage
-		chrome.storage.sync.get(function (/** @type {ABUStorage} */ storage) {
-			const tab = tabs[0];
-			if (!tab.url || !tab.title || !tab.favIconUrl) return;
-
-			const path = getWebpage(tab.url, tab.title, storage);
-			if (!path) return;
-
-			ABUState.url = tab.url;
-			ABUState.domain = path;
-			ABUState.title = tab.title;
-			ABUState.favIconUrl = tab.favIconUrl;
-
-			createPage();
-		});
 	});
 }
