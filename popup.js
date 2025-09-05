@@ -138,8 +138,7 @@ function createPage() {
 		if (
 			// If all of these are true, the user's on a homepage
 			(ABUState.domain.indexOf("/") !== -1 &&
-				ABUState.domain.substr(0, ABUState.domain.length - 2).indexOf("/") ==
-					-1 &&
+				ABUState.domain.substring(0, ABUState.domain.length - 2).indexOf("/") == -1 &&
 				!/(page|p|date)=/i.test(ABUState.url) &&
 				!/tapas.io\/(series|episode)\//.test(ABUState.url)) ||
 			// If any of these are true, the user's on a homepage
@@ -310,9 +309,7 @@ function createPage() {
 					//If a bookmark in the list doesn't exist
 					if (thisBookmark3.length === 0) {
 						const ABUid = storage[bookmarks[i]]["ABUid"];
-						const ABUButton = document.querySelector(
-							`button[data-id="${ABUid}"]`
-						);
+						const ABUButton = document.querySelector(`button[data-id="${ABUid}"]`);
 
 						//Remove the info
 						chrome.storage.sync.remove(bookmarks[i]);

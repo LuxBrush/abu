@@ -60,9 +60,7 @@ function checkLevels(storage, urlOrTitle) {
 		} //If it doesn't exist, run again
 
 		//Remove a subpage block from the end
-		test = test
-			.substring(0, test.length - 1)
-			.substring(0, test.lastIndexOf("/") + 1);
+		test = test.substring(0, test.length - 1).substring(0, test.lastIndexOf("/") + 1);
 
 		//If we run 10 times and don't find a new thing, we'll just use the original input
 	}
@@ -70,11 +68,4 @@ function checkLevels(storage, urlOrTitle) {
 	return output;
 }
 
-export {
-	activeIcons,
-	inactiveIcons,
-	ABUVersion,
-	ABUState,
-	getProgress,
-	checkLevels,
-};
+export { activeIcons, inactiveIcons, ABUVersion, ABUState, getProgress, checkLevels };

@@ -251,9 +251,7 @@ function updateTabInfo(thisTab) {
 					} else {
 						//If the bookmark's been found!
 						//If you're saving for the comic pages, don't update bookmarks for the comic/archive pages. If this isn't a comics page, it'll run this too
-						if (
-							!(tab.url.endsWith("/archive") && localDomain.endsWith("comic/"))
-						) {
+						if (!(tab.url.endsWith("/archive") && localDomain.endsWith("comic/"))) {
 							//Get the target ABUkmark's id and update that ABUkmark with this tab's URL
 							chrome.bookmarks.update(targetABUkmark[0].id, {
 								title: tab.title + " (ABU)",
