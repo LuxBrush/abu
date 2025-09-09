@@ -212,7 +212,10 @@ function updateTabInfo(thisTab) {
 	chrome.storage.sync.get(function (storage) {
 		//NOT DONE YET: If the page is part of a higher domain that we ARE keeping track of but we don't have a direct domain for this one, let's go up some levels:
 
-		ABUState.domain = checkLevels(storage, getWebpage(thisTab.url, thisTab.title, storage));
+		ABUState.domain = checkLevels(
+			storage,
+			getWebpage(thisTab.url, thisTab.title, storage)
+		);
 
 		// In case this gets changed elsewhere, keep it the same here
 		var localDomain = ABUState.domain;
@@ -585,7 +588,11 @@ function ABU(input, mustMakeNew) {
 function createABUkmark(input, parentId) {
 	ABUid = Date.now();
 	chrome.bookmarks.create(
-		{ parentId: parentId, title: ABUState.title + " (ABU)", url: createABURL(ABUState.url, ABUid) },
+		{
+			parentId: parentId,
+			title: ABUState.title + " (ABU)",
+			url: createABURL(ABUState.url, ABUid),
+		},
 		function () {
 			storeObj(input, ABUid);
 		}
