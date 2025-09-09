@@ -60,7 +60,7 @@ function getWebpage(url: string, title: string, storage: ABUStorage) {
 	if (oddUrl) output = oddUrl[0];
 
 	/////////SPECIAL WEBSITE COMPATABILITY/////////
-	var special = null;
+	let special = null;
 
 	//TAPAS// tapas.io/episode/ (same for every comic; we have to test by title)
 	//console.log(input);
@@ -68,19 +68,22 @@ function getWebpage(url: string, title: string, storage: ABUStorage) {
 		//Either get the title if separated by :: or by |
 		special = /.+(?=\s::)/.exec(title) || /.+(?=\s\|)/.exec(title);
 		//After get one, get the first item:
-		special = special[0];
+		if (special) special = special[0];
 
 		//The output needs to be tapas.io/ if we're in this situation, otherwise it'll mess up too often (with series/episode switching, other ABUkmarks on the "same level" but different comics)
 		output = "tapas.io/";
 	}
 
+	let ytUrl = null;
 	//YOUTUBE PLAYLIST// https://www.youtube.com/playlist?list=id
 	if (/youtube.com\/.+list=/.test(url)) {
 		//Get the playlist id
-		special = /(?:\?|&)list=[^?&]*/.exec(url)[0];
+		ytUrl = /(?:\?|&)list=[^?&]*/.exec(url);
+		if (ytUrl) special = ytUrl[0];
 	} else if (/youtube.com\/watch\?v=[^?&]*/.test(url)) {
 		//Get the video id and track time
-		special = /(?:\?|&)v=[^?&]*/.exec(url)[0];
+		ytUrl = /(?:\?|&)v=[^?&]*/.exec(url);
+		if (ytUrl) special = ytUrl[0];
 	}
 
 	//GOOGLE SHEETS PRESENTATION// https://docs.google.com/presentation/d/slideshow_id/relevant_stuff
