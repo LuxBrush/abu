@@ -12,6 +12,8 @@ const ABUState = {
 	warningClass: "",
 };
 
+let mainButton: HTMLButtonElement;
+
 console.log(
 	"May get an error: Unchecked runtime.lastError: The tab was closed. The code should keep running, but there's no way to check for if a tab exists; only to hide the error. I opted for just letting it be. :P"
 );
