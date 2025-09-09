@@ -152,21 +152,14 @@ chrome.tabs.onUpdated.addListener(function (_tabId, changeInfo, updatedTab) {
 		//console.log(updatedTab.url);
 
 		//Save the URL without an ABUid
-		var newURL = updatedTab.url.replace(/(\?|\&)ABUid.*/, "");
+		const newURL = updatedTab.url.replace(/(\?|\&)ABUid.*/, "");
 
 		//If the URL had an ABUid, remove it
 		if (newURL !== updatedTab.url) {
-			//console.log("Replace state and stuff");
-
 			//Loads the page without the ABUid
-			chrome.tabs.executeScript(updatedTab.id, {
-				code: "location.replace('" + newURL + "');",
-				runAt: "document_start",
-			});
-
-			//history.replaceState({},'',newURL);
-			//location.reload();
-			//chrome.tabs.update(tabId,{url:newURL});
+			if (updatedTab.id) {
+				chrome.tabs.update(updatedTab.id, { url: newURL });
+			}
 		}
 	}
 
