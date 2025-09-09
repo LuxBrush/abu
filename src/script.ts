@@ -142,7 +142,11 @@ function checkLevels(storge: ABUStorage, inputURL: string) {
 }
 
 //Any changes to the URL call this- even a querystring change
-chrome.tabs.onUpdated.addListener(function (tabId, changeInfo, updatedTab) {
+chrome.tabs.onUpdated.addListener(function (_tabId, changeInfo, updatedTab) {
+	if (!updatedTab.url) {
+		console.error("Tab update received with no URL - cannot process");
+		return;
+	}
 	//Check for ABUids on loading (we don't want to wait until it finishes loading to check, in some cases that could take a while or the ABUid could break PHP or other web code)
 	if (changeInfo.status == "loading") {
 		//console.log(updatedTab.url);
