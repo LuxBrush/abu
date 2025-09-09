@@ -8,10 +8,9 @@ const ABUState = {
 	domain: "",
 	title: "",
 	favIconUrl: "",
+	warning: "", // Warn about home page ABUkmarks going everywhere if they're on the home page
+	warningClass: "",
 };
-
-//Warn about home page ABUkmarks going everywhere if they're on the home page
-warning = "";
 
 console.log(
 	"May get an error: Unchecked runtime.lastError: The tab was closed. The code should keep running, but there's no way to check for if a tab exists; only to hide the error. I opted for just letting it be. :P"
@@ -292,8 +291,8 @@ function createPage() {
 			// If any of these are true, the user's on a homepage
 			/mangahub.io\/manga\//.test(ABUState.url)
 		) {
-			if (warning.indexOf("a subpage if") === -1)
-				warning +=
+			if (ABUState.warning.indexOf("a subpage if") === -1)
+				ABUState.warning +=
 					"ABUkmark a subpage if possible so visiting about, archives, links, etc doesn't update bookmarks. Just click on an article, a back button, or a button to start reading and it should be perfect!<br>";
 		}
 
@@ -313,7 +312,7 @@ function createPage() {
 					overwriteWarning(thisBookmark1[0]);
 
 					setNotification(
-						warning +
+						ABUState.warning +
 							"Will convert <em title='" +
 							thisBookmark1[0].url +
 							"'>" +
@@ -323,11 +322,11 @@ function createPage() {
 					if (thisBookmark1.length > 1) {
 						bookmarksChoose = "";
 
-						warningClass = "";
+						ABUState.warningClass = "";
 
 						//Create a dropdown so you can choose which to change
 						for (let i = 0; i < thisBookmark1.length; i++) {
-							warningClass = "";
+							ABUState.warningClass = "";
 
 							overwriteWarning(thisBookmark1[i]);
 
@@ -348,7 +347,7 @@ function createPage() {
 
 								bookmarksChoose +=
 									"<option class='" +
-									warningClass +
+									ABUState.warningClass +
 									"' title='" +
 									thisBookmark1[i].url +
 									"' data-domain='" +
@@ -372,7 +371,7 @@ function createPage() {
 							}
 						}
 						setNotification(
-							warning +
+							ABUState.warning +
 								thisBookmark1.length +
 								" bookmarks spotted. Will convert <select>" +
 								bookmarksChoose +
@@ -386,8 +385,8 @@ function createPage() {
 					mainButton.innerHTML = "Create ABUkmark";
 					mainButton.style.backgroundColor = "#619919";
 					//Set the notification if there's a warning
-					if (warning !== "") {
-						setNotification(warning);
+					if (ABUState.warning !== "") {
+						setNotification(ABUState.warning);
 					}
 				}
 				mainButton.onclick = function () {
@@ -514,9 +513,12 @@ function createPage() {
 
 //Warning when overwriting lower-level ABUkmarks
 function overwriteWarning(bookmark) {
-	if (bookmark.title.indexOf(" (ABU)") !== -1 && warning.indexOf("overwrit") == -1) {
-		warningClass = "overwrite";
-		warning +=
+	if (
+		bookmark.title.indexOf(" (ABU)") !== -1 &&
+		ABUState.warning.indexOf("overwrit") == -1
+	) {
+		ABUState.warningClass = "overwrite";
+		ABUState.warning +=
 			"<strong>Don't accidentally overwrite ABUkmarks deeper in the website!</strong> If you do it, do it on purpose. Any bookmarks ending in (ABU) are ABUkmarks.<br>";
 	}
 }
