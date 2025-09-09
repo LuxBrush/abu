@@ -227,7 +227,7 @@ function updateTabInfo(thisTab: chrome.tabs.Tab) {
 		if (storage[localDomain]) {
 			//Check that the bookmark hasn't been deleted
 			chrome.bookmarks.search(
-				"ABUid=" + storage[localDomain]["ABUid"],
+				"ABUid=" + storage[localDomain].ABUid,
 				async function (targetABUkmark) {
 					//console.log(targetABUkmark);
 
@@ -242,7 +242,7 @@ function updateTabInfo(thisTab: chrome.tabs.Tab) {
 							//Get the target ABUkmark's id and update that ABUkmark with this tab's URL
 							chrome.bookmarks.update(targetABUkmark[0].id, {
 								title: tabTitle + " (ABU)",
-								url: createABURL(tabUrl, storage[localDomain]["ABUid"]),
+								url: createABURL(tabUrl, storage[localDomain].ABUid),
 							});
 
 							//TESTING FAVICONS//
