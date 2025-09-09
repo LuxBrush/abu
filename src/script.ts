@@ -182,10 +182,13 @@ chrome.tabs.onActivated.addListener(function (activatedTab) {
 	});
 });
 
-function updateTabInfo(thisTab) {
+function updateTabInfo(thisTab: chrome.tabs.Tab) {
+	if (!thisTab.url || !thisTab.title) return;
+	const tabUrl = thisTab.url;
+	const tabTitle = thisTab.title;
 	///Tab-specific code
 	//YOUTUBE// add time of video
-	if (/youtube.com\/watch/.test(thisTab.url)) {
+	if (/youtube.com\/watch/.test(tabUrl)) {
 		//We cannot run functions, like document.getElementById("movie_player").getCurrentTime(), but we can read values. So we have to use a roundabout method to get what we want; the best seems to be getting the aria-valuenow from ytp-progress-bar
 
 		// As a video progresses, automatically adds
@@ -212,13 +215,10 @@ function updateTabInfo(thisTab) {
 		});
 	}
 
-	chrome.storage.sync.get(function (storage) {
+	chrome.storage.sync.get(function (storage: ABUStorage) {
 		//NOT DONE YET: If the page is part of a higher domain that we ARE keeping track of but we don't have a direct domain for this one, let's go up some levels:
 
-		ABUState.domain = checkLevels(
-			storage,
-			getWebpage(thisTab.url, thisTab.title, storage)
-		);
+		ABUState.domain = checkLevels(storage, getWebpage(tabUrl, tabTitle, storage));
 
 		// In case this gets changed elsewhere, keep it the same here
 		var localDomain = ABUState.domain;
@@ -238,11 +238,11 @@ function updateTabInfo(thisTab) {
 					} else {
 						//If the bookmark's been found!
 						//If you're saving for the comic pages, don't update bookmarks for the comic/archive pages. If this isn't a comics page, it'll run this too
-						if (!(thisTab.url.endsWith("/archive") && localDomain.endsWith("comic/"))) {
+						if (!(tabUrl.endsWith("/archive") && localDomain.endsWith("comic/"))) {
 							//Get the target ABUkmark's id and update that ABUkmark with this tab's URL
 							chrome.bookmarks.update(targetABUkmark[0].id, {
-								title: thisTab.title + " (ABU)",
-								url: createABURL(thisTab.url, storage[localDomain]["ABUid"]),
+								title: tabTitle + " (ABU)",
+								url: createABURL(tabUrl, storage[localDomain]["ABUid"]),
 							});
 
 							//TESTING FAVICONS//
