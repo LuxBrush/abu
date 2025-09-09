@@ -520,7 +520,7 @@ function createPage() {
 }
 
 //Warning when overwriting lower-level ABUkmarks
-function overwriteWarning(bookmark) {
+function overwriteWarning(bookmark: chrome.bookmarks.BookmarkTreeNode) {
 	if (
 		bookmark.title.indexOf(" (ABU)") !== -1 &&
 		ABUState.warning.indexOf("overwrit") == -1
@@ -531,11 +531,11 @@ function overwriteWarning(bookmark) {
 	}
 }
 
-function ABU(input, mustMakeNew) {
-	inArray = 0;
-	inArrayDomain = "";
+function ABU(inputUrl: string, mustMakeNew: boolean) {
+	let inArray = 0;
+	let inArrayDomain = "";
 
-	if (mainButton.dataset.multiple == 1) {
+	if (mainButton.dataset.multiple === "1") {
 		inArray = document.getElementsByTagName("SELECT")[0].selectedIndex;
 
 		//Get the bookmark to change with this:
@@ -551,7 +551,7 @@ function ABU(input, mustMakeNew) {
 		}
 	}
 
-	chrome.bookmarks.search(input, function (thisBookmark) {
+	chrome.bookmarks.search(inputUrl, function (thisBookmark) {
 		if (!thisBookmark[inArray] || mustMakeNew) {
 			//If the bookmark doesn't exist
 
@@ -560,11 +560,11 @@ function ABU(input, mustMakeNew) {
 				if (!thisFolder[0]) {
 					//If folder ABUkmarks doesn't exist
 					chrome.bookmarks.create({ title: "ABUkmarks" }, function (newFolder) {
-						createABUkmark(input, newFolder.id);
+						createABUkmark(inputUrl, newFolder.id);
 					});
 				} else {
 					//If the folder exists
-					createABUkmark(input, thisFolder[0].id);
+					createABUkmark(inputUrl, thisFolder[0].id);
 				}
 				//Not always located there; get exact location and state it
 				setNotification(
@@ -580,7 +580,7 @@ function ABU(input, mustMakeNew) {
 
 			var ABUid = Date.now();
 
-			storeObj(input, ABUid);
+			storeObj(inputUrl, ABUid);
 
 			chrome.bookmarks.update(thisBookmark[inArray].id, {
 				title: ABUState.title + " (ABU)",
