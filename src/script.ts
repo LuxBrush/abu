@@ -88,8 +88,9 @@ function getWebpage(url: string, title: string, storage: ABUStorage) {
 
 	//GOOGLE SHEETS PRESENTATION// https://docs.google.com/presentation/d/slideshow_id/relevant_stuff
 	if (/docs.google.com\/presentation\/d\/.+\//.test(url)) {
+		const gSheetUrl = /docs.google.com\/presentation\/d\/.+\//.exec(url);
 		//Get the slideshow url
-		special = /docs.google.com\/presentation\/d\/.+\//.exec(url)[0];
+		if (gSheetUrl) special = gSheetUrl[0];
 	}
 
 	//console.log(special);
