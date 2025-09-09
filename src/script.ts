@@ -38,7 +38,7 @@ function getWebpage(url: string, title: string, storage: ABUStorage) {
 		/blog/
 		/comic/
 	*/
-	var keywordCheck = /.+\/(blog|comic)\//.exec(output);
+	const keywordCheck = /.+\/(blog|comic)\//.exec(output);
 	if (keywordCheck) output = keywordCheck[0];
 
 	//Check for indicative keywords; go up to those
@@ -46,18 +46,18 @@ function getWebpage(url: string, title: string, storage: ABUStorage) {
 	if (indicativeCheck) output = indicativeCheck[0];
 
 	/////////ODD-URL WEBSITES COMPATABILITY/////////
-	var keywordCheck = null;
+	var oddUrl = null;
 
 	//WEBTOONS// webtoons.com/language/genre/name/
-	if (!keywordCheck) keywordCheck = /webtoons.com\/[^/]+\/[^/]+\/[^/]+\//.exec(url);
+	if (!oddUrl) oddUrl = /webtoons.com\/[^/]+\/[^/]+\/[^/]+\//.exec(url);
 
 	//LEZHIM// lezhin.com/language/comic/title
-	if (!keywordCheck) keywordCheck = /lezhin.com\/[^/]+\/comic\/[^/]+\//.exec(url);
+	if (!oddUrl) oddUrl = /lezhin.com\/[^/]+\/comic\/[^/]+\//.exec(url);
 
 	//MANGAHUB.IO// mangahub.com/chapter/title
-	if (!keywordCheck) keywordCheck = /mangahub.io\/chapter\/[^/]+\//.exec(url);
+	if (!oddUrl) oddUrl = /mangahub.io\/chapter\/[^/]+\//.exec(url);
 
-	if (keywordCheck) output = keywordCheck[0];
+	if (oddUrl) output = oddUrl[0];
 
 	/////////SPECIAL WEBSITE COMPATABILITY/////////
 	var special = null;
