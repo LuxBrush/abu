@@ -499,18 +499,21 @@ function createPage() {
 
 		abuAnywhere.innerHTML = anywhereButtons;
 
-		var buttons = abuAnywhere.children;
-		var images = document.getElementsByTagName("img");
+		const buttons = abuAnywhere.getElementsByTagName("button");
+		const images = abuAnywhere.getElementsByTagName("img");
 
 		//Add functions for each button
 		for (let ii = 0; ii < buttons.length; ii++) {
-			buttons[ii].onclick = function () {
-				unABU(this.dataset.domain, this.dataset.id);
+			const button = buttons[ii];
+			if (!button.dataset.domain || !button.dataset.id) continue;
+			button.onclick = function () {
+				unABU(button.dataset.domain, button.dataset.id);
 			};
 
 			//Hide any images that fail to load properly
-			images[ii].onerror = function () {
-				this.style = "display:none;";
+			const image = images[ii];
+			image.onerror = function () {
+				image.style.display = "none";
 			};
 		}
 	});
