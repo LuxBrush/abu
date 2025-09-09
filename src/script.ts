@@ -3,11 +3,12 @@ const activeIcons = { "128": "icons/128blue.png" };
 const inactiveIcons = { "128": "icons/128gray.png" };
 const ABUVersion = 1.4;
 
-//Call the variables here
-var url = "";
-var domain = "";
-var title = "";
-var favIconUrl = "";
+const ABUState = {
+	url: "",
+	domain: "",
+	title: "",
+	favIconUrl: "",
+};
 
 //Warn about home page ABUkmarks going everywhere if they're on the home page
 warning = "";
@@ -211,10 +212,10 @@ function updateTabInfo(thisTab) {
 	chrome.storage.sync.get(function (storage) {
 		//NOT DONE YET: If the page is part of a higher domain that we ARE keeping track of but we don't have a direct domain for this one, let's go up some levels:
 
-		domain = checkLevels(storage, getWebpage(thisTab.url, thisTab.title, storage));
+		ABUState.domain = checkLevels(storage, getWebpage(thisTab.url, thisTab.title, storage));
 
 		// In case this gets changed elsewhere, keep it the same here
-		var localDomain = domain;
+		var localDomain = ABUState.domain;
 
 		//If this domain has an ABUkmark associated with it
 		if (storage[localDomain]) {
@@ -276,17 +277,17 @@ function createPage() {
 		mainButton.dataset.multiple = 0;
 		//console.log(domain,domain.substr(0,domain.length-2).indexOf("/")==-1);
 
-		console.log("url is", url);
+		console.log("url is", ABUState.url);
 
 		//If we're on the homepage, warn the user that subpages are better
 		if (
 			// If all of these are true, the user's on a homepage
-			(domain.indexOf("/") !== -1 &&
-				domain.substr(0, domain.length - 2).indexOf("/") == -1 &&
-				!/(page|p|date)=/i.test(url) &&
-				!/tapas.io\/(series|episode)\//.test(url)) ||
+			(ABUState.domain.indexOf("/") !== -1 &&
+				ABUState.domain.substr(0, ABUState.domain.length - 2).indexOf("/") == -1 &&
+				!/(page|p|date)=/i.test(ABUState.url) &&
+				!/tapas.io\/(series|episode)\//.test(ABUState.url)) ||
 			// If any of these are true, the user's on a homepage
-			/mangahub.io\/manga\//.test(url)
+			/mangahub.io\/manga\//.test(ABUState.url)
 		) {
 			if (warning.indexOf("a subpage if") === -1)
 				warning +=
@@ -295,12 +296,12 @@ function createPage() {
 
 		anywhereButtons = "";
 
-		domain = checkLevels(storage, domain);
+		ABUState.domain = checkLevels(storage, ABUState.domain);
 
 		//Setup buttons
-		if (!storage[domain]) {
+		if (!storage[ABUState.domain]) {
 			//If we don't have an ABUkmark for this site
-			chrome.bookmarks.search(domain, function (thisBookmark1) {
+			chrome.bookmarks.search(ABUState.domain, function (thisBookmark1) {
 				if (thisBookmark1[0]) {
 					//If the bookmark exists
 					mainButton.innerHTML = "Convert to ABUkmark";
@@ -387,22 +388,22 @@ function createPage() {
 					}
 				}
 				mainButton.onclick = function () {
-					ABU(domain, false, true);
+					ABU(ABUState.domain, false, true);
 				};
 			});
 		} else {
 			//If we have an ABUkmark for this, according to our data
 			chrome.bookmarks.search(
-				"ABUid=" + storage[domain]["ABUid"],
+				"ABUid=" + storage[ABUState.domain]["ABUid"],
 				function (thisBookmark2) {
 					if (!thisBookmark2) {
-						chrome.storage.sync.remove(domain);
+						chrome.storage.sync.remove(ABUState.domain);
 					} else {
 						check = false;
 						for (let i = 0; i < thisBookmark2.length; i++) {
 							if (
 								thisBookmark2[i] &&
-								domain ==
+								ABUState.domain ==
 									checkLevels(
 										thisBookmark2,
 										getWebpage(thisBookmark2[i].url, thisBookmark2[i].title, storage)
@@ -419,15 +420,15 @@ function createPage() {
 							mainButton.innerHTML = "Revert to normal bookmark";
 							mainButton.style.backgroundColor = "#f00";
 							mainButton.onclick = function () {
-								unABU(domain, storage[domain]["ABUid"]);
+								unABU(ABUState.domain, storage[ABUState.domain]["ABUid"]);
 								chrome.browserAction.setIcon({ path: inactiveIcons });
 							};
 						} else {
-							chrome.storage.sync.remove(domain);
+							chrome.storage.sync.remove(ABUState.domain);
 							mainButton.innerHTML = "Create ABUkmark";
 							mainButton.style.backgroundColor = "#619919";
 							mainButton.onclick = function () {
-								ABU(domain, false, false);
+								ABU(ABUState.domain, false, false);
 							};
 						}
 					}
@@ -441,7 +442,7 @@ function createPage() {
 		for (let i = 0; i < bookmarks.length; i++) {
 			//Don't create a button for the webpage domain we're on
 			//Don't create a button for the ABUVersion object, which checks the current version in use.
-			if (bookmarks[i] == domain || bookmarks[i] == "ABUVersion") {
+			if (bookmarks[i] == ABUState.domain || bookmarks[i] == "ABUVersion") {
 				continue;
 			}
 
@@ -569,8 +570,8 @@ function ABU(input, mustMakeNew) {
 			storeObj(input, ABUid);
 
 			chrome.bookmarks.update(thisBookmark[inArray].id, {
-				title: title + " (ABU)",
-				url: createABURL(url, ABUid),
+				title: ABUState.title + " (ABU)",
+				url: createABURL(ABUState.url, ABUid),
 			});
 
 			setNotification("");
@@ -584,8 +585,8 @@ function ABU(input, mustMakeNew) {
 function createABUkmark(input, parentId) {
 	ABUid = Date.now();
 	chrome.bookmarks.create(
-		{ parentId: parentId, title: title + " (ABU)", url: createABURL(url, ABUid) },
-		function (newBookmark) {
+		{ parentId: parentId, title: ABUState.title + " (ABU)", url: createABURL(ABUState.url, ABUid) },
+		function () {
 			storeObj(input, ABUid);
 		}
 	);
@@ -602,7 +603,7 @@ function setNotification(input) {
 
 	if (document.getElementById("onlyNewABU")) {
 		document.getElementById("onlyNewABU").onclick = function () {
-			ABU(domain, true, false);
+			ABU(ABUState.domain, true, false);
 		};
 	}
 
@@ -613,7 +614,7 @@ function setNotification(input) {
 function storeObj(input, bookmarkId) {
 	var obj = {};
 	var foo = input;
-	obj[foo] = { ABUid: bookmarkId, favIconUrl: favIconUrl };
+	obj[foo] = { ABUid: bookmarkId, favIconUrl: ABUState.favIconUrl };
 	chrome.storage.sync.set(obj);
 	createPage();
 }
@@ -648,10 +649,10 @@ if (document.getElementById("current-page")) {
 		//console.log(tabs);
 		//Need to get storage here, for getting the webpage
 		chrome.storage.sync.get(function (storage) {
-			url = tabs[0].url;
-			domain = getWebpage(url, tabs[0].title, storage);
-			title = tabs[0].title;
-			favIconUrl = tabs[0].favIconUrl;
+			ABUState.url = tabs[0].url;
+			ABUState.domain = getWebpage(ABUState.url, tabs[0].title, storage);
+			ABUState.title = tabs[0].title;
+			ABUState.favIconUrl = tabs[0].favIconUrl;
 
 			//Link to email me
 			document.getElementById("email").onclick = function () {
