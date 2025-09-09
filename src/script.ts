@@ -108,16 +108,16 @@ function getWebpage(url: string, title: string, storage: ABUStorage) {
 	return output;
 }
 
-function checkLevels(object, input) {
+function checkLevels(storge: ABUStorage, inputURL: string) {
 	//console.log("Looking for higher level...",object,input);
 
-	var test = input,
-		output = input;
+	var test = inputURL,
+		output = inputURL;
 
 	//If we're on a special-case website where the title is passed instead of the URL, return with it
-	if (input.indexOf("/") === -1) {
+	if (inputURL.indexOf("/") === -1) {
 		//console.log("Returning!");
-		return input;
+		return inputURL;
 	}
 
 	//Test up to 10 times for deeper names
@@ -125,13 +125,13 @@ function checkLevels(object, input) {
 		//console.log(object[test]);
 
 		//If it exists, return it
-		if (object[test]) {
+		if (storge[test]) {
 			output = test;
 			break;
 		} //If it doesn't exist, run again
 
 		//Remove a subpage block from the end
-		test = test.substr(0, test.length - 1).substr(0, test.lastIndexOf("/") + 1);
+		test = test.substring(0, test.length - 1).substring(0, test.lastIndexOf("/") + 1);
 
 		//If we run 10 times and don't find a new thing, we'll just use the original input
 	}
