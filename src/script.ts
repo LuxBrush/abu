@@ -536,18 +536,14 @@ function ABU(inputUrl: string, mustMakeNew: boolean) {
 	let inArrayDomain = "";
 
 	if (mainButton.dataset.multiple === "1") {
-		inArray = document.getElementsByTagName("SELECT")[0].selectedIndex;
+		const selectElement = document.getElementsByTagName("SELECT")[0] as HTMLSelectElement;
+		inArray = selectElement.selectedIndex;
 
 		//Get the bookmark to change with this:
-		if (
-			document.getElementsByTagName("SELECT")[0].options[
-				document.getElementsByTagName("SELECT")[0].selectedIndex
-			].className !== ""
-		) {
-			inArrayDomain =
-				document.getElementsByTagName("SELECT")[0].options[
-					document.getElementsByTagName("SELECT")[0].selectedIndex
-				].dataset.domain;
+		if (selectElement.options[selectElement.selectedIndex].className !== "") {
+			const selectDomain =
+				selectElement.options[selectElement.selectedIndex].dataset.domain;
+			if (selectDomain) inArrayDomain = selectDomain;
 		}
 	}
 
