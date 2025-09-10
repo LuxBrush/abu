@@ -221,7 +221,7 @@ function updateTabInfo(thisTab: chrome.tabs.Tab) {
 		ABUState.domain = checkLevels(storage, getWebpage(tabUrl, tabTitle, storage));
 
 		// In case this gets changed elsewhere, keep it the same here
-		var localDomain = ABUState.domain;
+		const localDomain = ABUState.domain;
 
 		//If this domain has an ABUkmark associated with it
 		if (storage[localDomain]) {
@@ -241,7 +241,7 @@ function updateTabInfo(thisTab: chrome.tabs.Tab) {
 						if (!(tabUrl.endsWith("/archive") && localDomain.endsWith("comic/"))) {
 							//Get the target ABUkmark's id and update that ABUkmark with this tab's URL
 							chrome.bookmarks.update(targetABUkmark[0].id, {
-								title: tabTitle + " (ABU)",
+								title: `${tabTitle} (ABU)`,
 								url: createABURL(tabUrl, storage[localDomain].ABUid),
 							});
 
@@ -591,8 +591,8 @@ function ABU(inputUrl: string, mustMakeNew: boolean) {
 }
 
 //Create a new bookmark to be an ABUkmark
-function createABUkmark(input, parentId) {
-	ABUid = Date.now();
+function createABUkmark(inputUrl: string, parentId: string) {
+	const ABUid = Date.now();
 	chrome.bookmarks.create(
 		{
 			parentId: parentId,
@@ -600,7 +600,7 @@ function createABUkmark(input, parentId) {
 			url: createABURL(ABUState.url, ABUid),
 		},
 		function () {
-			storeObj(input, ABUid);
+			storeObj(inputUrl, ABUid);
 		}
 	);
 }
