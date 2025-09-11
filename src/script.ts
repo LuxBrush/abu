@@ -630,11 +630,16 @@ function setNotification(htmlString: string) {
 }
 
 //Stores an object in the user's synced data
-function storeObj(input, bookmarkId) {
-	var obj = {};
-	var foo = input;
-	obj[foo] = { ABUid: bookmarkId, favIconUrl: ABUState.favIconUrl };
-	chrome.storage.sync.set(obj);
+/**
+ * Stores a bookmark object in Chrome's synced storage
+ * @param scopeKey - The key under which to store the bookmark
+ * @param ABUid - Unique ID for the bookmark
+ */
+function storeObj(scopeKey: ScopeKey, ABUid: number) {
+	var newStorage: ABUStorage = {
+		[scopeKey]: { ABUid, favIconUrl: ABUState.favIconUrl }
+	};
+	chrome.storage.sync.set(newStorage);
 	createPage();
 }
 
