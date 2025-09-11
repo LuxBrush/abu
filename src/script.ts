@@ -606,7 +606,7 @@ function createABUkmark(inputUrl: string, parentId: string) {
 }
 
 //Make an ABURL
-function createABURL(inputURL, inputABUid) {
+function createABURL(inputURL: string, inputABUid: number) {
 	//ABURL is the URL that ABU creates that specifies the bookmark is ABU; it just appends a querystring with the id
 	return inputURL + (inputURL.indexOf("?") > -1 ? "&" : "?") + "ABUid=" + inputABUid;
 }
