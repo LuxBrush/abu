@@ -611,16 +611,22 @@ function createABURL(inputURL: string, inputABUid: number) {
 	return inputURL + (inputURL.indexOf("?") > -1 ? "&" : "?") + "ABUid=" + inputABUid;
 }
 
-function setNotification(input) {
-	document.getElementById("notification").innerHTML = input;
+/**
+ * Sets a notification message on the page.
+ * @param htmlString The message to display.
+ */
+function setNotification(htmlString: string) {
+	const notificationElement = document.getElementById("notification");
+	if (!notificationElement) return;
+	notificationElement.innerHTML = htmlString;
 
-	if (document.getElementById("onlyNewABU")) {
-		document.getElementById("onlyNewABU").onclick = function () {
-			ABU(ABUState.domain, true, false);
-		};
-	}
+	const onlyNewABUElement = document.getElementById("onlyNewABU");
+	if (!onlyNewABUElement) return;
+	onlyNewABUElement.onclick = function () {
+		ABU(ABUState.domain, true);
+	};
 
-	document.getElementById("notification").style.display = input !== "" ? "block" : "none";
+	notificationElement.style.display = htmlString !== "" ? "block" : "none";
 }
 
 //Stores an object in the user's synced data
