@@ -644,16 +644,19 @@ function storeObj(scopeKey: ScopeKey, ABUid: number) {
 }
 
 //Make an ABUkmark back into a regular bookmark
-function unABU(setUrl, setId) {
+function unABU(scopeKey: ScopeKey, ABUid: number) {
 	//Get the bookmark
-	chrome.bookmarks.search("ABUid=" + setId, function (targetABUkmark) {
+	chrome.bookmarks.search(`ABUid=${ABUid}`, function (targetABUkmark) {
+		const ABUBookmark = targetABUkmark[0];
+		if (!ABUBookmark.url) return;
+
 		//Remove the ABU tag
-		chrome.bookmarks.update(targetABUkmark[0].id, {
-			url: targetABUkmark[0].url.replace(/(\?|&)ABUid=[0-9]+/g, ""),
-			title: targetABUkmark[0].title.replace(" (ABU)", "")
+		chrome.bookmarks.update(ABUBookmark.id, {
+			url: ABUBookmark.url.replace(/(\?|&)ABUid=[0-9]+/g, ""),
+			title: ABUBookmark.title.replace(" (ABU)", "")
 		});
 	});
-	chrome.storage.sync.remove(setUrl, function () {
+	chrome.storage.sync.remove(scopeKey, function () {
 		setNotification("");
 		createPage();
 	});
