@@ -9,7 +9,7 @@ const ABUState = {
 	title: "",
 	favIconUrl: "",
 	warning: "", // Warn about home page ABUkmarks going everywhere if they're on the home page
-	warningClass: "",
+	warningClass: ""
 };
 
 let mainButton: HTMLButtonElement;
@@ -211,7 +211,7 @@ function updateTabInfo(thisTab: chrome.tabs.Tab) {
 					history.replaceState(null,'',newURL);
 				},1000);
 			}
-		`,
+		`
 		});
 	}
 
@@ -242,7 +242,7 @@ function updateTabInfo(thisTab: chrome.tabs.Tab) {
 							//Get the target ABUkmark's id and update that ABUkmark with this tab's URL
 							chrome.bookmarks.update(targetABUkmark[0].id, {
 								title: `${tabTitle} (ABU)`,
-								url: createABURL(tabUrl, storage[localDomain].ABUid),
+								url: createABURL(tabUrl, storage[localDomain].ABUid)
 							});
 
 							//TESTING FAVICONS//
@@ -580,7 +580,7 @@ function ABU(inputUrl: string, mustMakeNew: boolean) {
 
 			chrome.bookmarks.update(thisBookmark[inArray].id, {
 				title: ABUState.title + " (ABU)",
-				url: createABURL(ABUState.url, ABUid),
+				url: createABURL(ABUState.url, ABUid)
 			});
 
 			setNotification("");
@@ -597,7 +597,7 @@ function createABUkmark(inputUrl: string, parentId: string) {
 		{
 			parentId: parentId,
 			title: ABUState.title + " (ABU)",
-			url: createABURL(ABUState.url, ABUid),
+			url: createABURL(ABUState.url, ABUid)
 		},
 		function () {
 			storeObj(inputUrl, ABUid);
@@ -639,7 +639,7 @@ function unABU(setUrl, setId) {
 		//Remove the ABU tag
 		chrome.bookmarks.update(targetABUkmark[0].id, {
 			url: targetABUkmark[0].url.replace(/(\?|&)ABUid=[0-9]+/g, ""),
-			title: targetABUkmark[0].title.replace(" (ABU)", ""),
+			title: targetABUkmark[0].title.replace(" (ABU)", "")
 		});
 	});
 	chrome.storage.sync.remove(setUrl, function () {
@@ -672,7 +672,7 @@ if (document.getElementById("current-page")) {
 				chrome.tabs.create({
 					active: true,
 					url: "mailto:joshuapowlison@gmail.com",
-					index: tabs[0].index + 1,
+					index: tabs[0].index + 1
 				});
 			};
 
@@ -681,7 +681,7 @@ if (document.getElementById("current-page")) {
 				chrome.tabs.create({
 					active: true,
 					url: "https://joshpowlison.com/",
-					index: tabs[0].index + 1,
+					index: tabs[0].index + 1
 				});
 			};
 
