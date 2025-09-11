@@ -47,7 +47,7 @@ function getWebpage(url: string, title: string, storage: ABUStorage) {
 	var indicativeCheck = /.+\/(?=season-|ep-|episode-|page-|p-)/.exec(output);
 	if (indicativeCheck) output = indicativeCheck[0];
 
-	/////////ODD-URL WEBSITES COMPATABILITY/////////
+	/////////ODD-URL WEBSITES COMPATIBILITY/////////
 	var oddUrl = null;
 
 	//WEBTOONS// webtoons.com/language/genre/name/
@@ -61,7 +61,7 @@ function getWebpage(url: string, title: string, storage: ABUStorage) {
 
 	if (oddUrl) output = oddUrl[0];
 
-	/////////SPECIAL WEBSITE COMPATABILITY/////////
+	/////////SPECIAL WEBSITE COMPATIBILITY/////////
 	let special = null;
 
 	//TAPAS// tapas.io/episode/ (same for every comic; we have to test by title)
@@ -110,7 +110,7 @@ function getWebpage(url: string, title: string, storage: ABUStorage) {
 	return output;
 }
 
-function checkLevels(storge: ABUStorage, inputURL: string) {
+function checkLevels(storage: ABUStorage, inputURL: string) {
 	//console.log("Looking for higher level...",object,input);
 
 	var test = inputURL,
@@ -127,7 +127,7 @@ function checkLevels(storge: ABUStorage, inputURL: string) {
 		//console.log(object[test]);
 
 		//If it exists, return it
-		if (storge[test]) {
+		if (storage[test]) {
 			output = test;
 			break;
 		} //If it doesn't exist, run again
