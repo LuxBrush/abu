@@ -505,9 +505,9 @@ function createPage() {
 		//Add functions for each button
 		for (let ii = 0; ii < buttons.length; ii++) {
 			const button = buttons[ii];
-			if (!button.dataset.domain || !button.dataset.id) continue;
 			button.onclick = function () {
-				unABU(button.dataset.domain, button.dataset.id);
+				if (!button.dataset.domain || !button.dataset.id) return;
+				unABU(button.dataset.domain, Number(button.dataset.id));
 			};
 
 			//Hide any images that fail to load properly
