@@ -199,15 +199,15 @@ function updateTabInfo(thisTab: chrome.tabs.Tab) {
 				var ABUYT = setInterval(function(){
 					// console.log('RUNNING INTERVAL');
 					var progressBar = document.getElementsByClassName("ytp-progress-bar");
-					
+
 					if(!progressBar.length) return;
-					
+
 					// If a miniplayer is opened, we need to make sure we get the last element- that will be the main player.
 					var newURL = window.location.href.replace(/&t=[^&]+|$/,"&t="+progressBar[progressBar.length-1].getAttribute("aria-valuenow"));
-					
+
 					// Don't update the history if it's the same- this wastes resources
 					if(newURL === window.location.href) return;
-					
+
 					history.replaceState(null,'',newURL);
 				},1000);
 			}
