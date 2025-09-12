@@ -8,7 +8,7 @@
 	
 	,"background":{
 		"scripts":[
-			"script.js"
+			"background.js"
 		]
 	}
 	
