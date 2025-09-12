@@ -20,7 +20,6 @@ chrome.tabs.onUpdated.addListener(function (_tabId, changeInfo, updatedTab) {
 	}
 	//Check for ABUids on loading (we don't want to wait until it finishes loading to check, in some cases that could take a while or the ABUid could break PHP or other web code)
 	if (changeInfo.status == "loading") {
-
 		//Save the URL without an ABUid
 		const newURL = updatedTab.url.replace(/(\?|\&)ABUid.*/, "");
 
@@ -64,9 +63,7 @@ async function updateTabInfo(thisTab: chrome.tabs.Tab) {
 	const tabId = thisTab.id;
 	//YOUTUBE// add time of video
 	if (/youtube.com\/watch/.test(tabUrl)) {
-		//We cannot run functions, like document.getElementById("movie_player").getCurrentTime(), but we can read values. So we have to use a roundabout method to get what we want; the best seems to be getting the aria-valuenow from ytp-progress-bar
-
-		// As a video progresses, automatically adds
+		// As a video progresses, automatically adds time to address bar
 		await chrome.scripting.executeScript({
 			target: { tabId },
 			func: getProgress
@@ -87,7 +84,6 @@ async function updateTabInfo(thisTab: chrome.tabs.Tab) {
 			chrome.bookmarks.search(
 				"ABUid=" + storage[localDomain].ABUid,
 				async function (targetABUkmark) {
-
 					//If the bookmark's gone
 					if (!targetABUkmark || targetABUkmark.length === 0) {
 						//Get the target ABUkmark's id and update that ABUkmark with this tab's URL
