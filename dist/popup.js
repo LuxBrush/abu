@@ -1,6 +1,4 @@
 import { activeIcons, inactiveIcons, ABUState, getWebpage, checkLevels, createABURL } from "./common.js";
-function updateStateVertion() { }
-updateStateVertion();
 let mainButton;
 console.log("ABU popup loaded!");
 const mainButtonCheck = document.getElementById("current-page");
