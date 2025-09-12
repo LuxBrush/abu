@@ -86,13 +86,13 @@ function updateTabInfo(thisTab: chrome.tabs.Tab) {
 					//If the bookmark's gone
 					if (!targetABUkmark || targetABUkmark.length === 0) {
 						//Get the target ABUkmark's id and update that ABUkmark with this tab's URL
-						chrome.storage.sync.remove(localDomain);
+						await chrome.storage.sync.remove(localDomain);
 					} else {
 						//If the bookmark's been found!
 						//If you're saving for the comic pages, don't update bookmarks for the comic/archive pages. If this isn't a comics page, it'll run this too
 						if (!(tabUrl.endsWith("/archive") && localDomain.endsWith("comic/"))) {
 							//Get the target ABUkmark's id and update that ABUkmark with this tab's URL
-							chrome.bookmarks.update(targetABUkmark[0].id, {
+							await chrome.bookmarks.update(targetABUkmark[0].id, {
 								title: `${tabTitle} (ABU)`,
 								url: createABURL(tabUrl, storage[localDomain].ABUid)
 							});
@@ -103,7 +103,7 @@ function updateTabInfo(thisTab: chrome.tabs.Tab) {
 
 							//If this new tab is the active one, update the icon:
 							if (thisTab.active) {
-								chrome.action.setIcon({ path: activeIcons });
+								await chrome.action.setIcon({ path: activeIcons });
 							}
 						}
 					}
@@ -118,17 +118,3 @@ function updateTabInfo(thisTab: chrome.tabs.Tab) {
 		}
 	});
 }
-
-//Warning when overwriting lower-level ABUkmarks
-function overwriteWarning(bookmark: chrome.bookmarks.BookmarkTreeNode) {
-	if (
-		bookmark.title.indexOf(" (ABU)") !== -1 &&
-		ABUState.warning.indexOf("overwrit") == -1
-	) {
-		ABUState.warningClass = "overwrite";
-		ABUState.warning +=
-			"<strong>Don't accidentally overwrite ABUkmarks deeper in the website!</strong> If you do it, do it on purpose. Any bookmarks ending in (ABU) are ABUkmarks.<br>";
-	}
-}
-
-//Make an ABUkmark back into a regular bookmark
