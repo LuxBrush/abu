@@ -1,6 +1,5 @@
 const activeIcons = { "128": "icons/128blue.png" };
 const inactiveIcons = { "128": "icons/128gray.png" };
-const ABUVersion = 1.4;
 const ABUState = {
     url: "",
     domain: "",
@@ -93,4 +92,4 @@ function getProgress() {
         history.replaceState(history.state, "", url);
     }
 }
-export { activeIcons, inactiveIcons, ABUVersion, ABUState, getWebpage, checkLevels, createABURL, getProgress };
+export { activeIcons, inactiveIcons, ABUState, getWebpage, checkLevels, createABURL, getProgress };

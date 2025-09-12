@@ -1,7 +1,6 @@
 import {
 	activeIcons,
 	inactiveIcons,
-	ABUVersion,
 	ABUState,
 	getWebpage,
 	checkLevels,
@@ -45,15 +44,16 @@ chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
 
 function createPage() {
 	chrome.storage.sync.get(function (storage: ABUStorage) {
+		const version = chrome.runtime.getManifest().version;
 		//ABUVersion info
-		if (!storage.ABUVersion || storage.ABUVersion < ABUVersion) {
+		if (!storage.ABUVersion || storage.ABUVersion < Number(version)) {
 			document
 				.getElementsByTagName("BODY")[0]
 				.insertAdjacentHTML(
 					"afterbegin",
-					"<p id='update'>ABU 1.4 adds support for mangahub.io. Always feel free to let me know if ABU doesn't work on any website!</p>"
+					"<p id='update'>ABU 1.5 is now a manifest v3 extension. Always feel free to let me know if ABU doesn't work on any website!</p>"
 				);
-			chrome.storage.sync.set({ ABUVersion: ABUVersion });
+			chrome.storage.sync.set({ ABUVersion: Number(version) });
 		}
 
 		mainButton.dataset.multiple = "0";
