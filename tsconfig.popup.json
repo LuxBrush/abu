@@ -10,5 +10,5 @@
 		"removeComments": true,
 		"skipLibCheck": true,
 	},
-	"include": ["src/popup.ts", "src/definitions.d.ts"]
+	"include": ["src/popup.ts", "src/common.ts", "src/definitions.d.ts"]
 }
