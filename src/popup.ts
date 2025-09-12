@@ -1,147 +1,18 @@
-//Icons
-const activeIcons = { "128": "icons/128blue.png" };
-const inactiveIcons = { "128": "icons/128gray.png" };
-const ABUVersion = 1.4;
-
-const ABUState = {
-	url: "",
-	domain: "",
-	title: "",
-	favIconUrl: "",
-	warning: "", // Warn about home page ABUkmarks going everywhere if they're on the home page
-	warningClass: ""
-};
+import {
+	activeIcons,
+	inactiveIcons,
+	ABUVersion,
+	ABUState,
+	getWebpage,
+	checkLevels,
+	createABURL
+} from "./common.js";
 
 let mainButton: HTMLButtonElement;
 
 console.log(
 	"May get an error: Unchecked runtime.lastError: The tab was closed. The code should keep running, but there's no way to check for if a tab exists; only to hide the error. I opted for just letting it be. :P"
 );
-
-//Get the webpage to save the ABUkmark to
-function getWebpage(url: string, title: string, storage: ABUStorage) {
-	let output = "";
-	//Ignore the last section of the URL every time
-
-	//console.log(input);
-
-	//Get everything up until 1) a numbered section (past the domain) or 2) a querystring
-	const match = /(\S+\/\/+[^\/]+[^\d\?]+\/)+(?!$)/.exec(url);
-	if (match) output = match[0];
-	//console.log(output);
-
-	//Remove http (and www too, if it's present)
-	output = output.replace(/[^\/]+\/\/(www.)?/, "");
-
-	//console.log(input,output);
-
-	//Check for special key folders; go up to those
-	/*
-		/blog/
-		/comic/
-	*/
-	const keywordCheck = /.+\/(blog|comic)\//.exec(output);
-	if (keywordCheck) output = keywordCheck[0];
-
-	//Check for indicative keywords; go up to those
-	var indicativeCheck = /.+\/(?=season-|ep-|episode-|page-|p-)/.exec(output);
-	if (indicativeCheck) output = indicativeCheck[0];
-
-	/////////ODD-URL WEBSITES COMPATIBILITY/////////
-	var oddUrl = null;
-
-	//WEBTOONS// webtoons.com/language/genre/name/
-	if (!oddUrl) oddUrl = /webtoons.com\/[^/]+\/[^/]+\/[^/]+\//.exec(url);
-
-	//LEZHIM// lezhin.com/language/comic/title
-	if (!oddUrl) oddUrl = /lezhin.com\/[^/]+\/comic\/[^/]+\//.exec(url);
-
-	//MANGAHUB.IO// mangahub.com/chapter/title
-	if (!oddUrl) oddUrl = /mangahub.io\/chapter\/[^/]+\//.exec(url);
-
-	if (oddUrl) output = oddUrl[0];
-
-	/////////SPECIAL WEBSITE COMPATIBILITY/////////
-	let special = null;
-
-	//TAPAS// tapas.io/episode/ (same for every comic; we have to test by title)
-	//console.log(input);
-	if (/tapas.io\/(series|episode)\//.test(url) && title) {
-		//Either get the title if separated by :: or by |
-		special = /.+(?=\s::)/.exec(title) || /.+(?=\s\|)/.exec(title);
-		//After get one, get the first item:
-		if (special) special = special[0];
-
-		//The output needs to be tapas.io/ if we're in this situation, otherwise it'll mess up too often (with series/episode switching, other ABUkmarks on the "same level" but different comics)
-		output = "tapas.io/";
-	}
-
-	let ytUrl = null;
-	//YOUTUBE PLAYLIST// https://www.youtube.com/playlist?list=id
-	if (/youtube.com\/.+list=/.test(url)) {
-		//Get the playlist id
-		ytUrl = /(?:\?|&)list=[^?&]*/.exec(url);
-		if (ytUrl) special = ytUrl[0];
-	} else if (/youtube.com\/watch\?v=[^?&]*/.test(url)) {
-		//Get the video id and track time
-		ytUrl = /(?:\?|&)v=[^?&]*/.exec(url);
-		if (ytUrl) special = ytUrl[0];
-	}
-
-	//GOOGLE SHEETS PRESENTATION// https://docs.google.com/presentation/d/slideshow_id/relevant_stuff
-	if (/docs.google.com\/presentation\/d\/.+\//.test(url)) {
-		const gSheetUrl = /docs.google.com\/presentation\/d\/.+\//.exec(url);
-		//Get the slideshow url
-		if (gSheetUrl) special = gSheetUrl[0];
-	}
-
-	//console.log(special);
-
-	//If a special, unusual value was passed:
-	if (special) {
-		//See if either the special exists, or a higher level does not exist; in either case, we'll use the special value
-		if (storage[special] || !storage[checkLevels(storage, output)]) {
-			output = special;
-		}
-	}
-
-	//console.log(output);
-
-	return output;
-}
-
-function checkLevels(storage: ABUStorage, inputURL: string) {
-	//console.log("Looking for higher level...",object,input);
-
-	var test = inputURL,
-		output = inputURL;
-
-	//If we're on a special-case website where the title is passed instead of the URL, return with it
-	if (inputURL.indexOf("/") === -1) {
-		//console.log("Returning!");
-		return inputURL;
-	}
-
-	//Test up to 10 times for deeper names
-	for (let i = 0; i < 10; i++) {
-		//console.log(object[test]);
-
-		//If it exists, return it
-		if (storage[test]) {
-			output = test;
-			break;
-		} //If it doesn't exist, run again
-
-		//Remove a subpage block from the end
-		test = test.substring(0, test.length - 1).substring(0, test.lastIndexOf("/") + 1);
-
-		//If we run 10 times and don't find a new thing, we'll just use the original input
-	}
-
-	//console.log("Putting out "+output);
-
-	return output;
-}
 
 //Any changes to the URL call this- even a querystring change
 chrome.tabs.onUpdated.addListener(function (_tabId, changeInfo, updatedTab) {
@@ -603,12 +474,6 @@ function createABUkmark(inputUrl: string, parentId: string) {
 			storeObj(inputUrl, ABUid);
 		}
 	);
-}
-
-//Make an ABURL
-function createABURL(inputURL: string, inputABUid: number) {
-	//ABURL is the URL that ABU creates that specifies the bookmark is ABU; it just appends a querystring with the id
-	return inputURL + (inputURL.indexOf("?") > -1 ? "&" : "?") + "ABUid=" + inputABUid;
 }
 
 /**
