@@ -42,6 +42,9 @@ chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
 	});
 });
 
+/**
+ * Initializes the popup page, setting up buttons and notifications based on the current tab's ABUkmark status.
+ */
 function createPage() {
 	chrome.storage.sync.get(function (storage: ABUStorage) {
 		const version = chrome.runtime.getManifest().version;
@@ -295,7 +298,10 @@ function createPage() {
 	});
 }
 
-//Warning when overwriting lower-level ABUkmarks
+/**
+ * Displays a warning if the user is about to overwrite an existing ABUkmark.
+ * @param bookmark The bookmark that might be overwritten.
+ */
 function overwriteWarning(bookmark: chrome.bookmarks.BookmarkTreeNode) {
 	if (
 		bookmark.title.indexOf(" (ABU)") !== -1 &&
@@ -307,6 +313,11 @@ function overwriteWarning(bookmark: chrome.bookmarks.BookmarkTreeNode) {
 	}
 }
 
+/**
+ * Creates or converts a bookmark into an ABUkmark.
+ * @param inputUrl The URL scope for the ABUkmark.
+ * @param mustMakeNew If true, a new bookmark is created even if a matching one exists.
+ */
 function ABU(inputUrl: string, mustMakeNew: boolean) {
 	let inArray = 0;
 	let inArrayDomain = "";
@@ -366,7 +377,11 @@ function ABU(inputUrl: string, mustMakeNew: boolean) {
 	chrome.action.setIcon({ path: activeIcons });
 }
 
-//Create a new bookmark to be an ABUkmark
+/**
+ * Creates a new ABUkmark in the 'ABUkmarks' folder.
+ * @param inputUrl The URL scope for the new ABUkmark.
+ * @param parentId The ID of the parent folder for the new bookmark.
+ */
 function createABUkmark(inputUrl: string, parentId: string) {
 	const ABUid = Date.now();
 	chrome.bookmarks.create(
@@ -413,7 +428,11 @@ function storeObj(scopeKey: ScopeKey, ABUid: number) {
 	createPage();
 }
 
-//Make an ABUkmark back into a regular bookmark
+/**
+ * Reverts an ABUkmark to a regular bookmark.
+ * @param scopeKey The scope key of the ABUkmark to remove.
+ * @param ABUid The ID of the ABUkmark to remove.
+ */
 function unABU(scopeKey: ScopeKey, ABUid: number) {
 	//Get the bookmark
 	chrome.bookmarks.search(`ABUid=${ABUid}`, function (targetABUkmark) {

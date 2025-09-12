@@ -51,6 +51,13 @@ chrome.tabs.onActivated.addListener(function (activatedTab) {
 	});
 });
 
+/**
+ * Updates the browser action icon and ABUkmark for the given tab.
+ * This function is the core logic that runs on tab updates and activation.
+ * It determines if a page is already an ABUkmark, updates the bookmark URL,
+ * and sets the appropriate icon.
+ * @param thisTab The tab to update information for.
+ */
 function updateTabInfo(thisTab: chrome.tabs.Tab) {
 	if (!thisTab.url || !thisTab.title || !thisTab.id) return;
 	const tabUrl = thisTab.url;

@@ -11,7 +11,14 @@ const ABUState = {
 	warningClass: ""
 };
 
-//Get the webpage to save the ABUkmark to
+/**
+ * Determines the most relevant webpage level for creating or finding an ABUkmark.
+ * This function analyzes the URL and title to handle special cases for various websites.
+ * @param url The URL of the current tab.
+ * @param title The title of the current tab.
+ * @param storage The current ABUStorage object.
+ * @returns A string representing the determined webpage scope (a URL snippet or special key).
+ */
 function getWebpage(url: string, title: string, storage: ABUStorage) {
 	let output = "";
 	//Ignore the last section of the URL every time
@@ -103,6 +110,12 @@ function getWebpage(url: string, title: string, storage: ABUStorage) {
 	return output;
 }
 
+/**
+ * Traverses up the URL path to find the highest-level existing ABUkmark for a given URL.
+ * @param storage The ABUStorage object.
+ * @param inputURL The URL to check.
+ * @returns The URL of the highest-level ABUkmark found, or the original URL if none is found.
+ */
 function checkLevels(storage: ABUStorage, inputURL: string) {
 	//console.log("Looking for higher level...",object,input);
 
@@ -136,12 +149,21 @@ function checkLevels(storage: ABUStorage, inputURL: string) {
 	return output;
 }
 
-//Make an ABURL
+/**
+ * Appends an ABUid to a URL as a query parameter.
+ * @param inputURL The URL to modify.
+ * @param inputABUid The ABUid to append.
+ * @returns The new URL with the ABUid.
+ */
 function createABURL(inputURL: string, inputABUid: number) {
 	//ABURL is the URL that ABU creates that specifies the bookmark is ABU; it just appends a querystring with the id
 	return inputURL + (inputURL.indexOf("?") > -1 ? "&" : "?") + "ABUid=" + inputABUid;
 }
 
+/**
+ * Injects a script into the page to track video progress and update the URL with the current timestamp.
+ * This is primarily for video websites like YouTube.
+ */
 function getProgress() {
 	const videoTest = document.querySelector("video");
 	if (!videoTest) return;
