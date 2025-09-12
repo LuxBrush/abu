@@ -46,8 +46,8 @@ chrome.tabs.onUpdated.addListener(function (_tabId, changeInfo, updatedTab) {
 //We will check for onActivated so that when you switch tabs the icon can update. And, that way, if you have multiple tabs open for the same domain, whichever one you visit sets the ABUkmark (so it can switch dynamically)
 chrome.tabs.onActivated.addListener(function (activatedTab) {
 	//activatedTab only returns the tabId and windowId, so we need to use chrome.tabs.get to get the data we're REALLY interested in:
-	chrome.tabs.get(activatedTab.tabId, function (getTab) {
-		updateTabInfo(getTab);
+	chrome.tabs.get(activatedTab.tabId, async function (getTab) {
+		await updateTabInfo(getTab);
 	});
 });
 
@@ -58,7 +58,7 @@ chrome.tabs.onActivated.addListener(function (activatedTab) {
  * and sets the appropriate icon.
  * @param thisTab The tab to update information for.
  */
-function updateTabInfo(thisTab: chrome.tabs.Tab) {
+async function updateTabInfo(thisTab: chrome.tabs.Tab) {
 	if (!thisTab.url || !thisTab.title || !thisTab.id) return;
 	const tabUrl = thisTab.url;
 	const tabTitle = thisTab.title;
@@ -68,13 +68,13 @@ function updateTabInfo(thisTab: chrome.tabs.Tab) {
 		//We cannot run functions, like document.getElementById("movie_player").getCurrentTime(), but we can read values. So we have to use a roundabout method to get what we want; the best seems to be getting the aria-valuenow from ytp-progress-bar
 
 		// As a video progresses, automatically adds
-		chrome.scripting.executeScript({
+		await chrome.scripting.executeScript({
 			target: { tabId },
 			func: getProgress
 		});
 	}
 
-	chrome.storage.sync.get(function (storage: ABUStorage) {
+	await chrome.storage.sync.get(async function (storage: ABUStorage) {
 		//NOT DONE YET: If the page is part of a higher domain that we ARE keeping track of but we don't have a direct domain for this one, let's go up some levels:
 
 		ABUState.domain = checkLevels(storage, getWebpage(tabUrl, tabTitle, storage));
@@ -120,7 +120,7 @@ function updateTabInfo(thisTab: chrome.tabs.Tab) {
 			//If this webpage doesn't have an associated ABUkmark
 			//If this new tab is the current one, update the icon:
 			if (thisTab.active) {
-				chrome.action.setIcon({ path: inactiveIcons });
+				await chrome.action.setIcon({ path: inactiveIcons });
 			}
 		}
 	});

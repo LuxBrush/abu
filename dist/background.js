@@ -18,23 +18,23 @@ chrome.tabs.onUpdated.addListener(function (_tabId, changeInfo, updatedTab) {
     }
 });
 chrome.tabs.onActivated.addListener(function (activatedTab) {
-    chrome.tabs.get(activatedTab.tabId, function (getTab) {
-        updateTabInfo(getTab);
+    chrome.tabs.get(activatedTab.tabId, async function (getTab) {
+        await updateTabInfo(getTab);
     });
 });
-function updateTabInfo(thisTab) {
+async function updateTabInfo(thisTab) {
     if (!thisTab.url || !thisTab.title || !thisTab.id)
         return;
     const tabUrl = thisTab.url;
     const tabTitle = thisTab.title;
     const tabId = thisTab.id;
     if (/youtube.com\/watch/.test(tabUrl)) {
-        chrome.scripting.executeScript({
+        await chrome.scripting.executeScript({
             target: { tabId },
             func: getProgress
         });
     }
-    chrome.storage.sync.get(function (storage) {
+    await chrome.storage.sync.get(async function (storage) {
         ABUState.domain = checkLevels(storage, getWebpage(tabUrl, tabTitle, storage));
         const localDomain = ABUState.domain;
         if (storage[localDomain]) {
@@ -57,7 +57,7 @@ function updateTabInfo(thisTab) {
         }
         else {
             if (thisTab.active) {
-                chrome.action.setIcon({ path: inactiveIcons });
+                await chrome.action.setIcon({ path: inactiveIcons });
             }
         }
     });
