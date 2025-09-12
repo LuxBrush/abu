@@ -30,7 +30,6 @@ chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
 	const title = tab.title;
 	const favIconUrl = tab.favIconUrl;
 
-	//console.log(tabs);
 	//Need to get storage here, for getting the webpage
 	chrome.storage.sync.get(function (storage: ABUStorage) {
 		ABUState.url = url;
@@ -60,7 +59,6 @@ function createPage() {
 		}
 
 		mainButton.dataset.multiple = "0";
-		//console.log(domain,domain.substr(0,domain.length-2).indexOf("/")==-1);
 
 		console.log("url is", ABUState.url);
 
@@ -120,7 +118,6 @@ function createPage() {
 								getWebpage(bookmark.url, bookmark.title, storage)
 							); //checkLevels(bookmark.url);
 
-							//console.log(dropdownDomain);
 
 							//Add a dropdown with the bookmarks info
 							if (bookmark.title.indexOf(" (ABU)") == -1) {
@@ -235,7 +232,6 @@ function createPage() {
 			chrome.bookmarks.search(
 				"ABUid=" + storage[bookmarks[i]]["ABUid"],
 				function (thisBookmark3) {
-					//console.log(storage[bookmarks[i]]["ABUid"],"Bookmark is: ",thisBookmark3,thisBookmark3.length);
 
 					//If a bookmark in the list doesn't exist
 					if (thisBookmark3.length === 0) {

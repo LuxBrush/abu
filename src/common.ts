@@ -23,17 +23,14 @@ function getWebpage(url: string, title: string, storage: ABUStorage) {
 	let output = "";
 	//Ignore the last section of the URL every time
 
-	//console.log(input);
 
 	//Get everything up until 1) a numbered section (past the domain) or 2) a querystring
 	const match = /(\S+\/\/+[^\/]+[^\d\?]+\/)+(?!$)/.exec(url);
 	if (match) output = match[0];
-	//console.log(output);
 
 	//Remove http (and www too, if it's present)
 	output = output.replace(/[^\/]+\/\/(www.)?/, "");
 
-	//console.log(input,output);
 
 	//Check for special key folders; go up to those
 	/*
@@ -65,7 +62,6 @@ function getWebpage(url: string, title: string, storage: ABUStorage) {
 	let special = null;
 
 	//TAPAS// tapas.io/episode/ (same for every comic; we have to test by title)
-	//console.log(input);
 	if (/tapas.io\/(series|episode)\//.test(url) && title) {
 		//Either get the title if separated by :: or by |
 		special = /.+(?=\s::)/.exec(title) || /.+(?=\s\|)/.exec(title);
@@ -95,7 +91,6 @@ function getWebpage(url: string, title: string, storage: ABUStorage) {
 		if (gSheetUrl) special = gSheetUrl[0];
 	}
 
-	//console.log(special);
 
 	//If a special, unusual value was passed:
 	if (special) {
@@ -105,7 +100,6 @@ function getWebpage(url: string, title: string, storage: ABUStorage) {
 		}
 	}
 
-	//console.log(output);
 
 	return output;
 }
@@ -117,20 +111,17 @@ function getWebpage(url: string, title: string, storage: ABUStorage) {
  * @returns The URL of the highest-level ABUkmark found, or the original URL if none is found.
  */
 function checkLevels(storage: ABUStorage, inputURL: string) {
-	//console.log("Looking for higher level...",object,input);
 
 	var test = inputURL,
 		output = inputURL;
 
 	//If we're on a special-case website where the title is passed instead of the URL, return with it
 	if (inputURL.indexOf("/") === -1) {
-		//console.log("Returning!");
 		return inputURL;
 	}
 
 	//Test up to 10 times for deeper names
 	for (let i = 0; i < 10; i++) {
-		//console.log(object[test]);
 
 		//If it exists, return it
 		if (storage[test]) {
@@ -144,7 +135,6 @@ function checkLevels(storage: ABUStorage, inputURL: string) {
 		//If we run 10 times and don't find a new thing, we'll just use the original input
 	}
 
-	//console.log("Putting out "+output);
 
 	return output;
 }

@@ -20,7 +20,6 @@ chrome.tabs.onUpdated.addListener(function (_tabId, changeInfo, updatedTab) {
 	}
 	//Check for ABUids on loading (we don't want to wait until it finishes loading to check, in some cases that could take a while or the ABUid could break PHP or other web code)
 	if (changeInfo.status == "loading") {
-		//console.log(updatedTab.url);
 
 		//Save the URL without an ABUid
 		const newURL = updatedTab.url.replace(/(\?|\&)ABUid.*/, "");
@@ -88,7 +87,6 @@ async function updateTabInfo(thisTab: chrome.tabs.Tab) {
 			chrome.bookmarks.search(
 				"ABUid=" + storage[localDomain].ABUid,
 				async function (targetABUkmark) {
-					//console.log(targetABUkmark);
 
 					//If the bookmark's gone
 					if (!targetABUkmark || targetABUkmark.length === 0) {
