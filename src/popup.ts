@@ -118,7 +118,6 @@ function createPage() {
 								getWebpage(bookmark.url, bookmark.title, storage)
 							); //checkLevels(bookmark.url);
 
-
 							//Add a dropdown with the bookmarks info
 							if (bookmark.title.indexOf(" (ABU)") == -1) {
 								//If the bookmark is untitled, let the user know
@@ -177,45 +176,41 @@ function createPage() {
 			});
 		} else {
 			//If we have an ABUkmark for this, according to our data
-			chrome.bookmarks.search(
-				"ABUid=" + storage[ABUState.domain]["ABUid"],
-				function (thisBookmark2) {
-					if (!thisBookmark2) {
-						chrome.storage.sync.remove(ABUState.domain);
-					} else {
-						let check = false;
-						for (const bookmark of thisBookmark2) {
-							if (!bookmark.url) continue;
-							const checkedDomain = checkLevels(
-								storage,
-								getWebpage(bookmark.url, bookmark.title, storage)
-							);
-							if (ABUState.domain === checkedDomain) {
-								check = true;
-							}
-						}
-
-						//GO THROUGH THE FOR LOOP (otherwise won't work with multiple pages and if in a higher-level domain; need to check for that)
-
-						if (thisBookmark2[0] && check === true) {
-							//If we've found out the bookmark claimed to exist does, set the button so that:
-							mainButton.innerHTML = "Revert to normal bookmark";
-							mainButton.style.backgroundColor = "#f00";
-							mainButton.onclick = function () {
-								unABU(ABUState.domain, storage[ABUState.domain]["ABUid"]);
-								chrome.action.setIcon({ path: inactiveIcons });
-							};
-						} else {
-							chrome.storage.sync.remove(ABUState.domain);
-							mainButton.innerHTML = "Create ABUkmark";
-							mainButton.style.backgroundColor = "#619919";
-							mainButton.onclick = function () {
-								ABU(ABUState.domain, false);
-							};
+			const searchID = `ABUid=${storage[ABUState.domain].ABUid}`;
+			chrome.bookmarks.search(searchID, async function (thisBookmark2) {
+				if (!thisBookmark2) {
+					await chrome.storage.sync.remove(ABUState.domain);
+				} else {
+					let check = false;
+					for (const bookmark of thisBookmark2) {
+						if (!bookmark.url) continue;
+						const scopyKey = getWebpage(bookmark.url, bookmark.title, storage);
+						const checkedDomain = checkLevels(storage, scopyKey);
+						if (ABUState.domain === checkedDomain) {
+							check = true;
 						}
 					}
+
+					//GO THROUGH THE FOR LOOP (otherwise won't work with multiple pages and if in a higher-level domain; need to check for that)
+
+					if (thisBookmark2[0] && check === true) {
+						//If we've found out the bookmark claimed to exist does, set the button so that:
+						mainButton.textContent = "Revert to normal bookmark";
+						mainButton.style.backgroundColor = "#f00";
+						mainButton.onclick = async function () {
+							unABU(ABUState.domain, storage[ABUState.domain].ABUid);
+							await chrome.action.setIcon({ path: inactiveIcons });
+						};
+					} else {
+						await chrome.storage.sync.remove(ABUState.domain);
+						mainButton.textContent = "Create ABUkmark";
+						mainButton.style.backgroundColor = "#619919";
+						mainButton.onclick = function () {
+							ABU(ABUState.domain, false);
+						};
+					}
 				}
-			);
+			});
 		}
 
 		var bookmarks = Object.keys(storage);
@@ -232,7 +227,6 @@ function createPage() {
 			chrome.bookmarks.search(
 				"ABUid=" + storage[bookmarks[i]]["ABUid"],
 				function (thisBookmark3) {
-
 					//If a bookmark in the list doesn't exist
 					if (thisBookmark3.length === 0) {
 						const ABUid = storage[bookmarks[i]].ABUid;
