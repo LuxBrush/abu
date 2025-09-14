@@ -186,9 +186,7 @@ function createPage() {
 						if (!bookmark.url) continue;
 						const scopyKey = getWebpage(bookmark.url, bookmark.title, storage);
 						const checkedDomain = checkLevels(storage, scopyKey);
-						if (ABUState.domain === checkedDomain) {
-							check = true;
-						}
+						check = ABUState.domain === checkedDomain;
 					}
 
 					//GO THROUGH THE FOR LOOP (otherwise won't work with multiple pages and if in a higher-level domain; need to check for that)
