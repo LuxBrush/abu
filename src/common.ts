@@ -23,14 +23,12 @@ function getWebpage(url: string, title: string, storage: ABUStorage) {
 	let output = "";
 	//Ignore the last section of the URL every time
 
-
 	//Get everything up until 1) a numbered section (past the domain) or 2) a querystring
 	const match = /(\S+\/\/+[^\/]+[^\d\?]+\/)+(?!$)/.exec(url);
 	if (match) output = match[0];
 
 	//Remove http (and www too, if it's present)
 	output = output.replace(/[^\/]+\/\/(www.)?/, "");
-
 
 	//Check for special key folders; go up to those
 	/*
@@ -91,7 +89,6 @@ function getWebpage(url: string, title: string, storage: ABUStorage) {
 		if (gSheetUrl) special = gSheetUrl[0];
 	}
 
-
 	//If a special, unusual value was passed:
 	if (special) {
 		//See if either the special exists, or a higher level does not exist; in either case, we'll use the special value
@@ -99,7 +96,6 @@ function getWebpage(url: string, title: string, storage: ABUStorage) {
 			output = special;
 		}
 	}
-
 
 	return output;
 }
@@ -111,7 +107,6 @@ function getWebpage(url: string, title: string, storage: ABUStorage) {
  * @returns The URL of the highest-level ABUkmark found, or the original URL if none is found.
  */
 function checkLevels(storage: ABUStorage, inputURL: string) {
-
 	var test = inputURL,
 		output = inputURL;
 
@@ -122,7 +117,6 @@ function checkLevels(storage: ABUStorage, inputURL: string) {
 
 	//Test up to 10 times for deeper names
 	for (let i = 0; i < 10; i++) {
-
 		//If it exists, return it
 		if (storage[test]) {
 			output = test;
@@ -134,7 +128,6 @@ function checkLevels(storage: ABUStorage, inputURL: string) {
 
 		//If we run 10 times and don't find a new thing, we'll just use the original input
 	}
-
 
 	return output;
 }
