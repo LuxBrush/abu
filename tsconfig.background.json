@@ -2,7 +2,7 @@
 	"compilerOptions": {
 		"target": "ES2022",
 		"module": "ES2022",
-		"lib": ["ES2021", "WebWorker"],
+		"lib": ["ES2021", "WebWorker", "DOM"],
 		"strict": true,
 		"sourceMap": false,
 		"rootDir": "./src",
@@ -11,5 +11,5 @@
 		"skipLibCheck": true,
 		"types": ["chrome-types"]
 	},
-	"include": ["src/background.ts", "src/definitions.d.ts"]
+	"include": ["src/background.ts", "src/common.ts", "src/definitions.d.ts"]
 }
