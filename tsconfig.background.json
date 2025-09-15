@@ -9,6 +9,7 @@
 		"outDir": "./dist",
 		"removeComments": true,
 		"skipLibCheck": true,
+		"types": ["chrome-types"]
 	},
 	"include": ["src/background.ts", "src/definitions.d.ts"]
 }
