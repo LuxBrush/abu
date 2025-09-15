@@ -43,7 +43,6 @@ function createPage() {
                 ABUState.warning +=
                     "ABUkmark a subpage if possible so visiting about, archives, links, etc doesn't update bookmarks. Just click on an article, a back button, or a button to start reading and it should be perfect!<br>";
         }
-        let anywhereButtons = "";
         ABUState.domain = checkLevels(storage, ABUState.domain);
         if (!storage[ABUState.domain]) {
             chrome.bookmarks.search(ABUState.domain, function (thisBookmark1) {
@@ -119,31 +118,31 @@ function createPage() {
             });
         }
         else {
-            chrome.bookmarks.search("ABUid=" + storage[ABUState.domain]["ABUid"], function (thisBookmark2) {
+            const searchID = `ABUid=${storage[ABUState.domain].ABUid}`;
+            chrome.bookmarks.search(searchID, async function (thisBookmark2) {
                 if (!thisBookmark2) {
-                    chrome.storage.sync.remove(ABUState.domain);
+                    await chrome.storage.sync.remove(ABUState.domain);
                 }
                 else {
                     let check = false;
                     for (const bookmark of thisBookmark2) {
                         if (!bookmark.url)
                             continue;
-                        const checkedDomain = checkLevels(storage, getWebpage(bookmark.url, bookmark.title, storage));
-                        if (ABUState.domain === checkedDomain) {
-                            check = true;
-                        }
+                        const scopyKey = getWebpage(bookmark.url, bookmark.title, storage);
+                        const checkedDomain = checkLevels(storage, scopyKey);
+                        check = ABUState.domain === checkedDomain;
                     }
                     if (thisBookmark2[0] && check === true) {
-                        mainButton.innerHTML = "Revert to normal bookmark";
+                        mainButton.textContent = "Revert to normal bookmark";
                         mainButton.style.backgroundColor = "#f00";
-                        mainButton.onclick = function () {
-                            unABU(ABUState.domain, storage[ABUState.domain]["ABUid"]);
-                            chrome.action.setIcon({ path: inactiveIcons });
+                        mainButton.onclick = async function () {
+                            unABU(ABUState.domain, storage[ABUState.domain].ABUid);
+                            await chrome.action.setIcon({ path: inactiveIcons });
                         };
                     }
                     else {
-                        chrome.storage.sync.remove(ABUState.domain);
-                        mainButton.innerHTML = "Create ABUkmark";
+                        await chrome.storage.sync.remove(ABUState.domain);
+                        mainButton.textContent = "Create ABUkmark";
                         mainButton.style.backgroundColor = "#619919";
                         mainButton.onclick = function () {
                             ABU(ABUState.domain, false);
@@ -152,54 +151,55 @@ function createPage() {
                 }
             });
         }
-        var bookmarks = Object.keys(storage);
-        for (let i = 0; i < bookmarks.length; i++) {
-            if (bookmarks[i] == ABUState.domain || bookmarks[i] == "ABUVersion") {
-                continue;
-            }
-            chrome.bookmarks.search("ABUid=" + storage[bookmarks[i]]["ABUid"], function (thisBookmark3) {
-                if (thisBookmark3.length === 0) {
-                    const ABUid = storage[bookmarks[i]].ABUid;
-                    chrome.storage.sync.remove(bookmarks[i]);
-                    const ABUButton = document.querySelector(`button[data-id="${ABUid}"]`);
-                    if (ABUButton)
-                        ABUButton.remove();
-                }
-            });
-            anywhereButtons +=
-                "<button data-id='" +
-                    storage[Object.keys(storage)[i]]["ABUid"] +
-                    "' data-domain='" +
-                    Object.keys(storage)[i] +
-                    "'>&times; <img src='" +
-                    storage[Object.keys(storage)[i]]["favIconUrl"] +
-                    "'> " +
-                    Object.keys(storage)[i] +
-                    "</button>";
-        }
-        if (anywhereButtons == "") {
-            document.getElementsByTagName("hr")[0].style.display = "none";
-        }
-        console.log("Any favicons not found will produce errors below (it's not really worth worrying about)");
-        const abuAnywhere = document.getElementById("abu-anywhere");
-        if (!abuAnywhere)
-            return;
-        abuAnywhere.innerHTML = anywhereButtons;
-        const buttons = abuAnywhere.getElementsByTagName("button");
-        const images = abuAnywhere.getElementsByTagName("img");
-        for (let ii = 0; ii < buttons.length; ii++) {
-            const button = buttons[ii];
-            button.onclick = function () {
-                if (!button.dataset.domain || !button.dataset.id)
-                    return;
-                unABU(button.dataset.domain, Number(button.dataset.id));
-            };
-            const image = images[ii];
-            image.onerror = function () {
-                image.style.display = "none";
-            };
-        }
+        setUnABUttons(storage);
     });
+}
+function setUnABUttons(storage) {
+    const abuAnywhereDiv = document.getElementById("abu-anywhere");
+    if (!abuAnywhereDiv)
+        return;
+    for (const storageDomain in storage) {
+        if (storageDomain === ABUState.domain || storageDomain === "ABUVersion") {
+            continue;
+        }
+        const currentABUkmark = storage[storageDomain];
+        const id = currentABUkmark.ABUid;
+        const seachKey = `ABUid=${id}`;
+        chrome.bookmarks.search(seachKey, async (bookmarks) => {
+            if (bookmarks.length === 0) {
+                await chrome.storage.sync.remove(storageDomain);
+                const buttonSelector = `button[data-id="${id}"]`;
+                const ABUButton = document.querySelector(buttonSelector);
+                if (ABUButton)
+                    ABUButton.remove();
+            }
+        });
+        const unABUtton = document.createElement("button");
+        unABUtton.type = "button";
+        unABUtton.dataset.id = id.toString();
+        unABUtton.dataset.domain = storageDomain;
+        unABUtton.title = `Revert ${storageDomain} back to a normal bookmark?`;
+        unABUtton.onclick = () => {
+            if (!unABUtton.dataset.domain || !unABUtton.dataset.id)
+                return;
+            unABU(unABUtton.dataset.domain, Number(unABUtton.dataset.id));
+        };
+        const favIconUrl = currentABUkmark.favIconUrl;
+        if (favIconUrl && favIconUrl !== "") {
+            const favIcon = document.createElement("img");
+            favIcon.src = favIconUrl;
+            favIcon.alt = `Favicon for ${storageDomain}`;
+            unABUtton.append("\u00D7 ", favIcon, ` ${storageDomain}`);
+        }
+        else {
+            unABUtton.append(`\u00D7 ${storageDomain}`);
+        }
+        abuAnywhereDiv.append(unABUtton);
+    }
+    const buttons = abuAnywhereDiv.getElementsByTagName("button");
+    if (buttons.length === 0) {
+        document.getElementsByTagName("hr")[0].style.display = "none";
+    }
 }
 function overwriteWarning(bookmark) {
     if (bookmark.title.indexOf(" (ABU)") !== -1 &&
