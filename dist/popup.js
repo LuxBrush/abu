@@ -158,6 +158,9 @@ function setUnABUttons(storage) {
     const abuAnywhereDiv = document.getElementById("abu-anywhere");
     if (!abuAnywhereDiv)
         return;
+    while (abuAnywhereDiv.firstChild) {
+        abuAnywhereDiv.removeChild(abuAnywhereDiv.firstChild);
+    }
     for (const storageDomain in storage) {
         if (storageDomain === ABUState.domain || storageDomain === "ABUVersion") {
             continue;

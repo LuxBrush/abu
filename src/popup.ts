@@ -217,6 +217,11 @@ function setUnABUttons(storage: ABUStorage) {
 	const abuAnywhereDiv = document.getElementById("abu-anywhere");
 	if (!abuAnywhereDiv) return;
 
+	// Clear existing buttons before adding new ones
+	while (abuAnywhereDiv.firstChild) {
+		abuAnywhereDiv.removeChild(abuAnywhereDiv.firstChild);
+	}
+
 	// Create buttons for each ABUkmark in storage for the "ABU Anywhere" section.
 	// This allows users to manage all their ABUkmarks from any page.
 	for (const storageDomain in storage) {
