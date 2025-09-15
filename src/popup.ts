@@ -77,8 +77,6 @@ function createPage() {
 					"ABUkmark a subpage if possible so visiting about, archives, links, etc doesn't update bookmarks. Just click on an article, a back button, or a button to start reading and it should be perfect!<br>";
 		}
 
-		let anywhereButtons = "";
-
 		ABUState.domain = checkLevels(storage, ABUState.domain);
 
 		//Setup buttons
@@ -211,79 +209,78 @@ function createPage() {
 			});
 		}
 
-		var bookmarks = Object.keys(storage);
-
-		//Create buttons for removing ABUkmarks
-		for (let i = 0; i < bookmarks.length; i++) {
-			//Don't create a button for the webpage domain we're on
-			//Don't create a button for the ABUVersion object, which checks the current version in use.
-			if (bookmarks[i] == ABUState.domain || bookmarks[i] == "ABUVersion") {
-				continue;
-			}
-
-			//Look for the bookmarks as we go through the list, to make sure they still exist.
-			chrome.bookmarks.search(
-				"ABUid=" + storage[bookmarks[i]]["ABUid"],
-				function (thisBookmark3) {
-					//If a bookmark in the list doesn't exist
-					if (thisBookmark3.length === 0) {
-						const ABUid = storage[bookmarks[i]].ABUid;
-
-						//Remove the info
-						chrome.storage.sync.remove(bookmarks[i]);
-
-						const ABUButton = document.querySelector(`button[data-id="${ABUid}"]`);
-						//Remove the element, if it exists
-						if (ABUButton) ABUButton.remove();
-					}
-				}
-			);
-
-			//Add the button if it exists
-			anywhereButtons +=
-				"<button data-id='" +
-				storage[Object.keys(storage)[i]]["ABUid"] +
-				"' data-domain='" +
-				Object.keys(storage)[i] +
-				"'>&times; <img src='" +
-				storage[Object.keys(storage)[i]]["favIconUrl"] +
-				"'> " +
-				Object.keys(storage)[i] +
-				"</button>";
-		}
-
-		//If the user doesn't have any ABUkmarks, don't show the horizontal rule
-		if (anywhereButtons == "") {
-			document.getElementsByTagName("hr")[0].style.display = "none";
-		}
-
-		console.log(
-			"Any favicons not found will produce errors below (it's not really worth worrying about)"
-		);
-
-		const abuAnywhere = document.getElementById("abu-anywhere");
-		if (!abuAnywhere) return;
-
-		abuAnywhere.innerHTML = anywhereButtons;
-
-		const buttons = abuAnywhere.getElementsByTagName("button");
-		const images = abuAnywhere.getElementsByTagName("img");
-
-		//Add functions for each button
-		for (let ii = 0; ii < buttons.length; ii++) {
-			const button = buttons[ii];
-			button.onclick = function () {
-				if (!button.dataset.domain || !button.dataset.id) return;
-				unABU(button.dataset.domain, Number(button.dataset.id));
-			};
-
-			//Hide any images that fail to load properly
-			const image = images[ii];
-			image.onerror = function () {
-				image.style.display = "none";
-			};
-		}
+		setUnABUttons(storage);
 	});
+}
+
+function setUnABUttons(storage: ABUStorage) {
+	const abuAnywhereDiv = document.getElementById("abu-anywhere");
+	if (!abuAnywhereDiv) return;
+
+	// Create buttons for each ABUkmark in storage for the "ABU Anywhere" section.
+	// This allows users to manage all their ABUkmarks from any page.
+	for (const storageDomain in storage) {
+		// Skip the entry for the current page's domain and the extension's version tracking.
+		if (storageDomain === ABUState.domain || storageDomain === "ABUVersion") {
+			continue;
+		}
+
+		const currentABUkmark = storage[storageDomain];
+
+		const id = currentABUkmark.ABUid;
+		const seachKey = `ABUid=${id}`;
+
+		// Perform a data consistency check: if a bookmark is not found in the browser,
+		// remove its data from storage and its button from the UI.
+		chrome.bookmarks.search(seachKey, async (bookmarks) => {
+			// If the bookmark has been deleted from the browser...
+			if (bookmarks.length === 0) {
+				// ...remove the stale ABUkmark data from storage...
+				await chrome.storage.sync.remove(storageDomain);
+				// ...and remove its corresponding button from the popup.
+				const buttonSelector = `button[data-id="${id}"]`;
+				const ABUButton = document.querySelector(buttonSelector);
+				if (ABUButton) ABUButton.remove();
+			}
+		});
+
+		// Create a button that allows the user to revert an ABUkmark to a normal bookmark.
+		const unABUtton = document.createElement("button");
+		unABUtton.type = "button";
+		unABUtton.dataset.id = id.toString(); // Store ABUid for later retrieval.
+		unABUtton.dataset.domain = storageDomain; // Store scope key for later retrieval.
+		unABUtton.title = `Revert ${storageDomain} back to a normal bookmark?`;
+
+		// When clicked, the button will trigger the unABU function to revert the bookmark.
+		unABUtton.onclick = () => {
+			if (!unABUtton.dataset.domain || !unABUtton.dataset.id) return;
+			unABU(unABUtton.dataset.domain, Number(unABUtton.dataset.id));
+		};
+
+		const favIconUrl = currentABUkmark.favIconUrl;
+
+		// Construct the button's visible content.
+		if (favIconUrl && favIconUrl !== "") {
+			// If a favicon is available, display it next to the domain name for easier identification.
+			const favIcon = document.createElement("img");
+			favIcon.src = favIconUrl;
+			favIcon.alt = `Favicon for ${storageDomain}`;
+			unABUtton.append("\u00D7 ", favIcon, ` ${storageDomain}`);
+		} else {
+			// Otherwise, just show the domain name.
+			unABUtton.append(`\u00D7 ${storageDomain}`);
+		}
+
+		// Add the newly created button to the "ABU Anywhere" section of the popup.
+		abuAnywhereDiv.append(unABUtton);
+	}
+
+	const buttons = abuAnywhereDiv.getElementsByTagName("button");
+
+	//If the user doesn't have any ABUkmarks, don't show the horizontal rule
+	if (buttons.length === 0) {
+		document.getElementsByTagName("hr")[0].style.display = "none";
+	}
 }
 
 /**
