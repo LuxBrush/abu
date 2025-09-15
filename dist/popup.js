@@ -128,8 +128,8 @@ function createPage() {
                     for (const bookmark of thisBookmark2) {
                         if (!bookmark.url)
                             continue;
-                        const scopyKey = getWebpage(bookmark.url, bookmark.title, storage);
-                        const checkedDomain = checkLevels(storage, scopyKey);
+                        const scopeKey = getWebpage(bookmark.url, bookmark.title, storage);
+                        const checkedDomain = checkLevels(storage, scopeKey);
                         check = ABUState.domain === checkedDomain;
                     }
                     if (thisBookmark2[0] && check === true) {
@@ -167,8 +167,8 @@ function setUnABUttons(storage) {
         }
         const currentABUkmark = storage[storageDomain];
         const id = currentABUkmark.ABUid;
-        const seachKey = `ABUid=${id}`;
-        chrome.bookmarks.search(seachKey, async (bookmarks) => {
+        const searchKey = `ABUid=${id}`;
+        chrome.bookmarks.search(searchKey, async (bookmarks) => {
             if (bookmarks.length === 0) {
                 await chrome.storage.sync.remove(storageDomain);
                 const buttonSelector = `button[data-id="${id}"]`;
