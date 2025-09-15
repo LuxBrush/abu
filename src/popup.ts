@@ -182,8 +182,8 @@ function createPage() {
 					let check = false;
 					for (const bookmark of thisBookmark2) {
 						if (!bookmark.url) continue;
-						const scopyKey = getWebpage(bookmark.url, bookmark.title, storage);
-						const checkedDomain = checkLevels(storage, scopyKey);
+						const scopeKey = getWebpage(bookmark.url, bookmark.title, storage);
+						const checkedDomain = checkLevels(storage, scopeKey);
 						check = ABUState.domain === checkedDomain;
 					}
 
@@ -233,11 +233,11 @@ function setUnABUttons(storage: ABUStorage) {
 		const currentABUkmark = storage[storageDomain];
 
 		const id = currentABUkmark.ABUid;
-		const seachKey = `ABUid=${id}`;
+		const searchKey = `ABUid=${id}`;
 
 		// Perform a data consistency check: if a bookmark is not found in the browser,
 		// remove its data from storage and its button from the UI.
-		chrome.bookmarks.search(seachKey, async (bookmarks) => {
+		chrome.bookmarks.search(searchKey, async (bookmarks) => {
 			// If the bookmark has been deleted from the browser...
 			if (bookmarks.length === 0) {
 				// ...remove the stale ABUkmark data from storage...
