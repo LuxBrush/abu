@@ -1,0 +1,17 @@
+{
+  "name": "abu-automatic-bookmark-updater",
+  "version": "1.5.0",
+  "description": "Update site bookmarks to your current page automatically. Great for webcomics, wikis, blogs, and YouTube!",
+  "author": "Josh Powlison",
+  "license": "MIT",
+  "scripts": {
+    "build": "tsc --build",
+    "format": "prettier --write \"src/**/*.ts\""
+  },
+  "devDependencies": {
+    "chrome-types": "^0.1.365",
+    "prettier": "^3.6.2",
+    "typescript": "^5.7.2",
+    "typescript-language-server": "^5.0.0"
+  }
+}
