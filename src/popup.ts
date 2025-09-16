@@ -23,12 +23,7 @@ mainButton.dataset.multiple = "0";
 //Get URL
 chrome.tabs.query({ active: true, currentWindow: true }, async (tabs) => {
 	const tab = tabs[0];
-	if (!tab.url || !tab.title || !tab.favIconUrl) {
-		return;
-	}
-	const url = tab.url;
-	const title = tab.title;
-	const favIconUrl = tab.favIconUrl;
+	const { url, title, favIconUrl } = await getInfoFromTab(tab);
 
 	//Need to get storage here, for getting the webpage
 	await chrome.storage.sync.get((storage: ABUStorage) => {
@@ -41,6 +36,46 @@ chrome.tabs.query({ active: true, currentWindow: true }, async (tabs) => {
 	});
 });
 
+/**
+ * Extracts URL, title and favicon from a Chrome tab
+ * @param tab - Chrome tab object to extract info from
+ * @returns Object with url, title and favIconUrl (empty strings if unavailable)
+ */
+async function getInfoFromTab(tab: chrome.tabs.Tab) {
+	let url = tab.url;
+	if (!url) url = "";
+	let title = tab.title;
+	if (!title) title = "";
+	let favIconUrl = tab.favIconUrl;
+	if (!favIconUrl) favIconUrl = "";
+	if (favIconUrl.startsWith("data:")) {
+		const tabId = tab.id;
+		if (!tabId) {
+			favIconUrl = "";
+			return { url, title, favIconUrl };
+		}
+		// If favIconUrl is a data URL, try to get the favicon from the page's head
+		try {
+			const results = await chrome.scripting.executeScript({
+				target: { tabId },
+				func: () => {
+					const link = document.querySelector(
+						'link[rel*="icon"]'
+					) as HTMLAnchorElement | null;
+					return link ? link.href : "";
+				}
+			});
+
+			if (results && results[0]?.result) {
+				favIconUrl = results[0].result as string;
+			}
+		} catch (error) {
+			console.error("Failed to fetch favicon:", error);
+		}
+	}
+
+	return { url, title, favIconUrl };
+}
 /**
  * Initializes the popup page, setting up buttons and notifications based on the current tab's ABUkmark status.
  */

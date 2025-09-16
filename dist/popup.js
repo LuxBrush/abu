@@ -9,12 +9,7 @@ mainButton = mainButtonCheck;
 mainButton.dataset.multiple = "0";
 chrome.tabs.query({ active: true, currentWindow: true }, async (tabs) => {
     const tab = tabs[0];
-    if (!tab.url || !tab.title || !tab.favIconUrl) {
-        return;
-    }
-    const url = tab.url;
-    const title = tab.title;
-    const favIconUrl = tab.favIconUrl;
+    const { url, title, favIconUrl } = await getInfoFromTab(tab);
     await chrome.storage.sync.get((storage) => {
         ABUState.url = url;
         ABUState.domain = getWebpage(ABUState.url, title, storage);
@@ -23,6 +18,40 @@ chrome.tabs.query({ active: true, currentWindow: true }, async (tabs) => {
         createPage();
     });
 });
+async function getInfoFromTab(tab) {
+    let url = tab.url;
+    if (!url)
+        url = "";
+    let title = tab.title;
+    if (!title)
+        title = "";
+    let favIconUrl = tab.favIconUrl;
+    if (!favIconUrl)
+        favIconUrl = "";
+    if (favIconUrl.startsWith("data:")) {
+        const tabId = tab.id;
+        if (!tabId) {
+            favIconUrl = "";
+            return { url, title, favIconUrl };
+        }
+        try {
+            const results = await chrome.scripting.executeScript({
+                target: { tabId },
+                func: () => {
+                    const link = document.querySelector('link[rel*="icon"]');
+                    return link ? link.href : "";
+                }
+            });
+            if (results && results[0]?.result) {
+                favIconUrl = results[0].result;
+            }
+        }
+        catch (error) {
+            console.error("Failed to fetch favicon:", error);
+        }
+    }
+    return { url, title, favIconUrl };
+}
 function createPage() {
     chrome.storage.sync.get(function (storage) {
         const version = chrome.runtime.getManifest().version;
