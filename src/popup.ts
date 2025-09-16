@@ -21,7 +21,7 @@ mainButton = mainButtonCheck;
 mainButton.dataset.multiple = "0";
 
 //Get URL
-chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
+chrome.tabs.query({ active: true, currentWindow: true }, async (tabs) => {
 	const tab = tabs[0];
 	if (!tab.url || !tab.title || !tab.favIconUrl) {
 		return;
@@ -31,7 +31,7 @@ chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
 	const favIconUrl = tab.favIconUrl;
 
 	//Need to get storage here, for getting the webpage
-	chrome.storage.sync.get(function (storage: ABUStorage) {
+	await chrome.storage.sync.get((storage: ABUStorage) => {
 		ABUState.url = url;
 		ABUState.domain = getWebpage(ABUState.url, title, storage);
 		ABUState.title = title;

@@ -7,7 +7,7 @@ if (!mainButtonCheck) {
 }
 mainButton = mainButtonCheck;
 mainButton.dataset.multiple = "0";
-chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
+chrome.tabs.query({ active: true, currentWindow: true }, async (tabs) => {
     const tab = tabs[0];
     if (!tab.url || !tab.title || !tab.favIconUrl) {
         return;
@@ -15,7 +15,7 @@ chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
     const url = tab.url;
     const title = tab.title;
     const favIconUrl = tab.favIconUrl;
-    chrome.storage.sync.get(function (storage) {
+    await chrome.storage.sync.get((storage) => {
         ABUState.url = url;
         ABUState.domain = getWebpage(ABUState.url, title, storage);
         ABUState.title = title;
