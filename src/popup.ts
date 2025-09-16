@@ -310,6 +310,7 @@ function overwriteWarning(bookmark: chrome.bookmarks.BookmarkTreeNode) {
  * @param mustMakeNew If true, a new bookmark is created even if a matching one exists.
  */
 function ABU(inputUrl: string, mustMakeNew: boolean) {
+	if (inputUrl === "") return;
 	let inArray = 0;
 	let inArrayDomain = "";
 

@@ -214,6 +214,8 @@ function overwriteWarning(bookmark) {
     }
 }
 function ABU(inputUrl, mustMakeNew) {
+    if (inputUrl === "")
+        return;
     let inArray = 0;
     let inArrayDomain = "";
     if (mainButton.dataset.multiple === "1") {
