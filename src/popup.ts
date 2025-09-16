@@ -82,30 +82,30 @@ function createPage() {
 		//Setup buttons
 		if (!storage[ABUState.domain]) {
 			//If we don't have an ABUkmark for this site
-			chrome.bookmarks.search(ABUState.domain, function (thisBookmark1) {
-				if (!thisBookmark1) return;
-				if (thisBookmark1[0]) {
+			chrome.bookmarks.search(ABUState.domain, function (foundBookmarks) {
+				if (foundBookmarks && foundBookmarks[0]) {
+					const foundBookmark = foundBookmarks[0];
 					//If the bookmark exists
 					mainButton.innerHTML = "Convert to ABUkmark";
 					mainButton.style.backgroundColor = "#9ccc5e";
 
-					overwriteWarning(thisBookmark1[0]);
+					overwriteWarning(foundBookmark);
 
 					setNotification(
 						ABUState.warning +
 							"Will convert <em title='" +
-							thisBookmark1[0].url +
+							foundBookmark.url +
 							"'>" +
-							thisBookmark1[0].title +
+							foundBookmark.title +
 							"</em>. <span id='onlyNewABU'>Or, make a new ABUkmark.</span>"
 					);
-					if (thisBookmark1.length > 1) {
+					if (foundBookmarks.length > 1) {
 						let bookmarksChoose = "";
 
 						ABUState.warningClass = "";
 
 						//Create a dropdown so you can choose which to change
-						for (const bookmark of thisBookmark1) {
+						for (const bookmark of foundBookmarks) {
 							if (!bookmark.url) continue;
 							ABUState.warningClass = "";
 							let thisBookmarkTitle;
@@ -152,7 +152,7 @@ function createPage() {
 						}
 						setNotification(
 							ABUState.warning +
-								thisBookmark1.length +
+								foundBookmarks.length +
 								" bookmarks spotted. Will convert <select>" +
 								bookmarksChoose +
 								"</select>. <span id='onlyNewABU'>Or, make a new ABUkmark.</span>"
