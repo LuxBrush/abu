@@ -6,8 +6,15 @@
 	"description": "Update site bookmarks to your current page automatically. Great for webcomics, wikis, blogs, and YouTube!",
 	"author": "Josh Powlison",
 
+	"browser_specific_settings": {
+		"gecko": {
+			"id": "abu@example.com",
+			"strict_min_version": "109.0"
+		}
+	},
+
 	"background": {
-		"service_worker": "background.js",
+		"scripts": ["background.js"],
 		"type": "module"
 	},
 
