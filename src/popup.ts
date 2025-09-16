@@ -83,6 +83,7 @@ function createPage() {
 		if (!storage[ABUState.domain]) {
 			//If we don't have an ABUkmark for this site
 			chrome.bookmarks.search(ABUState.domain, function (thisBookmark1) {
+				if (!thisBookmark1) return;
 				if (thisBookmark1[0]) {
 					//If the bookmark exists
 					mainButton.innerHTML = "Convert to ABUkmark";

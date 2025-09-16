@@ -46,6 +46,8 @@ function createPage() {
         ABUState.domain = checkLevels(storage, ABUState.domain);
         if (!storage[ABUState.domain]) {
             chrome.bookmarks.search(ABUState.domain, function (thisBookmark1) {
+                if (!thisBookmark1)
+                    return;
                 if (thisBookmark1[0]) {
                     mainButton.innerHTML = "Convert to ABUkmark";
                     mainButton.style.backgroundColor = "#9ccc5e";
