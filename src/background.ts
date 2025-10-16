@@ -13,13 +13,14 @@ console.log(
 );
 
 //Any changes to the URL call this- even a querystring change
-chrome.tabs.onUpdated.addListener(function (_tabId, changeInfo, updatedTab) {
+chrome.tabs.onUpdated.addListener(async function (_tabId, changeInfo, updatedTab) {
 	if (!updatedTab.url) {
 		console.error("Tab update received with no URL - cannot process");
 		return;
 	}
+
 	//Check for ABUids on loading (we don't want to wait until it finishes loading to check, in some cases that could take a while or the ABUid could break PHP or other web code)
-	if (changeInfo.status == "loading") {
+	if (changeInfo.status === "loading") {
 		//Save the URL without an ABUid
 		const newURL = updatedTab.url.replace(/(\?|\&)ABUid.*/, "");
 
@@ -27,15 +28,15 @@ chrome.tabs.onUpdated.addListener(function (_tabId, changeInfo, updatedTab) {
 		if (newURL !== updatedTab.url) {
 			//Loads the page without the ABUid
 			if (updatedTab.id) {
-				chrome.tabs.update(updatedTab.id, { url: newURL });
+				await chrome.tabs.update(updatedTab.id, { url: newURL });
 			}
 		}
 	}
 
 	//Save the data if we're not switching from an ABUid tab (must be complete to get the title)
-	if (changeInfo.status == "complete" || changeInfo.title) {
+	if ((changeInfo.status === "complete" || changeInfo.title) && !/[?&]ABUid=/.test(updatedTab.url)) {
 		//YouTube seems to have an AJAX setup now; when the title's been adjusted, we should be good to go! (status doesn't go to complete, which implies AJAX setup)
-		updateTabInfo(updatedTab);
+		await updateTabInfo(updatedTab);
 	}
 });
 

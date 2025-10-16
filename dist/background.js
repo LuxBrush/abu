@@ -1,20 +1,20 @@
 import { activeIcons, inactiveIcons, ABUState, getWebpage, checkLevels, createABURL, getProgress } from "./common.js";
 console.log("May get an error: Unchecked runtime.lastError: The tab was closed. The code should keep running, but there's no way to check for if a tab exists; only to hide the error. I opted for just letting it be. :P");
-chrome.tabs.onUpdated.addListener(function (_tabId, changeInfo, updatedTab) {
+chrome.tabs.onUpdated.addListener(async function (_tabId, changeInfo, updatedTab) {
     if (!updatedTab.url) {
         console.error("Tab update received with no URL - cannot process");
         return;
     }
-    if (changeInfo.status == "loading") {
+    if (changeInfo.status === "loading") {
         const newURL = updatedTab.url.replace(/(\?|\&)ABUid.*/, "");
         if (newURL !== updatedTab.url) {
             if (updatedTab.id) {
-                chrome.tabs.update(updatedTab.id, { url: newURL });
+                await chrome.tabs.update(updatedTab.id, { url: newURL });
             }
         }
     }
-    if (changeInfo.status == "complete" || changeInfo.title) {
-        updateTabInfo(updatedTab);
+    if ((changeInfo.status === "complete" || changeInfo.title) && !/[?&]ABUid=/.test(updatedTab.url)) {
+        await updateTabInfo(updatedTab);
     }
 });
 chrome.tabs.onActivated.addListener(function (activatedTab) {
